@@ -1,0 +1,261 @@
+"use server"
+
+import { createServerActionClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
+
+export async function signIn(prevState: any, formData: FormData) {
+  if (!formData) {
+    return { error: "Form data is missing" }
+  }
+
+  const email = formData.get("email")
+  const password = formData.get("password")
+
+  if (!email || !password) {
+    return { error: "Email and password are required" }
+  }
+
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.toString(),
+      password: password.toString(),
+    })
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error("Login error:", error)
+    return { error: "An unexpected error occurred. Please try again." }
+  }
+}
+
+export async function signUp(prevState: any, formData: FormData) {
+  if (!formData) {
+    return { error: "Form data is missing" }
+  }
+
+  const email = formData.get("email")
+  const password = formData.get("password")
+
+  if (!email || !password) {
+    return { error: "Email and password are required" }
+  }
+
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  try {
+    const { error } = await supabase.auth.signUp({
+      email: email.toString(),
+      password: password.toString(),
+      options: {
+        emailRedirectTo:
+          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
+          `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}`,
+      },
+    })
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    return { success: "Check your email to confirm your account." }
+  } catch (error) {
+    console.error("Sign up error:", error)
+    return { error: "An unexpected error occurred. Please try again." }
+  }
+}
+
+export async function signOut() {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  await supabase.auth.signOut()
+  redirect("/auth/login")
+}
+
+export async function createProblem(prevState: any, formData: FormData) {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "You must be logged in to create problems" }
+  }
+
+  const title = formData.get("title")?.toString()
+  const description = formData.get("description")?.toString()
+  const type = formData.get("type")?.toString()
+  const severity = formData.get("severity")?.toString()
+  const location = formData.get("location")?.toString()
+
+  if (!title || !description || !type || !severity) {
+    return { error: "All required fields must be filled" }
+  }
+
+  try {
+    const { data: problemData, error: problemError } = await supabase
+      .from("problems")
+      .insert({
+        title,
+        description,
+        type,
+        severity,
+        location,
+        user_id: user.id,
+      })
+      .select("id")
+      .single()
+
+    if (problemError) {
+      return { error: problemError.message }
+    }
+
+    const photoCount = Number.parseInt(formData.get("photo_count")?.toString() || "0")
+
+    if (photoCount > 0) {
+      const photoInserts = []
+
+      for (let i = 0; i < photoCount; i++) {
+        const photoUrl = formData.get(`photo_${i}`)?.toString()
+        const filename = formData.get(`filename_${i}`)?.toString()
+
+        if (photoUrl && filename) {
+          photoInserts.push({
+            problem_id: problemData.id,
+            photo_url: photoUrl,
+            filename: filename,
+          })
+        }
+      }
+
+      if (photoInserts.length > 0) {
+        const { error: photoError } = await supabase.from("problem_photos").insert(photoInserts)
+
+        if (photoError) {
+          console.error("Photo insert error:", photoError)
+          // Don't fail the whole operation if photos fail
+        }
+      }
+    }
+
+    revalidatePath("/")
+    return { success: "Problem created successfully" }
+  } catch (error) {
+    console.error("Create problem error:", error)
+    return { error: "Failed to create problem" }
+  }
+}
+
+export async function updateProblemStatus(problemId: string, status: "pendente" | "resolvido") {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "You must be logged in" }
+  }
+
+  try {
+    const { error } = await supabase
+      .from("problems")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", problemId)
+      .eq("user_id", user.id)
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    revalidatePath("/")
+    return { success: "Problem status updated" }
+  } catch (error) {
+    console.error("Update problem status error:", error)
+    return { error: "Failed to update problem status" }
+  }
+}
+
+export async function saveW5H2Plan(prevState: any, formData: FormData) {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "You must be logged in" }
+  }
+
+  const problemId = formData.get("problemId")?.toString()
+  const what = formData.get("what")?.toString()
+  const why = formData.get("why")?.toString()
+  const when_plan = formData.get("when")?.toString()
+  const where_plan = formData.get("where")?.toString()
+  const who = formData.get("who")?.toString()
+  const how = formData.get("how")?.toString()
+  const how_much = formData.get("howMuch")?.toString()
+
+  if (!problemId) {
+    return { error: "Problem ID is required" }
+  }
+
+  try {
+    // Check if plan already exists
+    const { data: existingPlan } = await supabase.from("w5h2_plans").select("id").eq("problem_id", problemId).single()
+
+    if (existingPlan) {
+      // Update existing plan
+      const { error } = await supabase
+        .from("w5h2_plans")
+        .update({
+          what,
+          why,
+          when_plan,
+          where_plan,
+          who,
+          how,
+          how_much,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("problem_id", problemId)
+
+      if (error) {
+        return { error: error.message }
+      }
+    } else {
+      // Create new plan
+      const { error } = await supabase.from("w5h2_plans").insert({
+        problem_id: problemId,
+        what,
+        why,
+        when_plan,
+        where_plan,
+        who,
+        how,
+        how_much,
+      })
+
+      if (error) {
+        return { error: error.message }
+      }
+    }
+
+    revalidatePath("/")
+    return { success: "Plan saved successfully" }
+  } catch (error) {
+    console.error("Save W5H2 plan error:", error)
+    return { error: "Failed to save plan" }
+  }
+}
