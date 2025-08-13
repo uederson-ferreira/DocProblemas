@@ -16,7 +16,7 @@ interface ProblemsAppProps {
 }
 
 export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
-  const [problems, setProblems] = useState(initialProblems)
+  const [problems, setProblems] = useState(initialProblems || [])
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [severityFilter, setSeverityFilter] = useState("all")
@@ -24,6 +24,10 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
 
   // Filtrar problemas
   const filteredProblems = useMemo(() => {
+    if (!Array.isArray(problems)) {
+      return []
+    }
+
     return problems.filter((problem) => {
       const matchesSearch =
         problem.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,15 +40,15 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
   }, [problems, searchTerm, severityFilter, typeFilter])
 
   const handleProblemAdded = (newProblem: Problem & { w5h2_plans: W5H2Plan[] }) => {
-    setProblems((prev) => [newProblem, ...prev])
+    setProblems((prev) => [newProblem, ...(prev || [])])
   }
 
   const handleProblemUpdated = (updatedProblem: Problem & { w5h2_plans: W5H2Plan[] }) => {
-    setProblems((prev) => prev.map((problem) => (problem.id === updatedProblem.id ? updatedProblem : problem)))
+    setProblems((prev) => (prev || []).map((problem) => (problem.id === updatedProblem.id ? updatedProblem : problem)))
   }
 
   const handleExportData = () => {
-    const dataStr = JSON.stringify(problems, null, 2)
+    const dataStr = JSON.stringify(problems || [], null, 2)
     const dataBlob = new Blob([dataStr], { type: "application/json" })
     const url = URL.createObjectURL(dataBlob)
     const link = document.createElement("a")
@@ -54,7 +58,7 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
     URL.revokeObjectURL(url)
   }
 
-  const unresolvedCount = problems.filter((p) => p.status === "pendente").length
+  const unresolvedCount = (problems || []).filter((p) => p.status === "pendente").length
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -115,7 +119,7 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
         </div>
 
         {/* Estatísticas */}
-        <StatsGrid problems={problems} />
+        <StatsGrid problems={problems || []} />
 
         {/* Lista de Problemas */}
         <div className="space-y-6">
@@ -123,14 +127,14 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📋</div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">
-                {problems.length === 0 ? "Nenhum problema registrado" : "Nenhum problema encontrado"}
+                {(problems || []).length === 0 ? "Nenhum problema registrado" : "Nenhum problema encontrado"}
               </h3>
               <p className="text-slate-600 mb-6">
-                {problems.length === 0
+                {(problems || []).length === 0
                   ? 'Clique em "Novo Problema" para começar a documentar'
                   : "Tente ajustar os filtros de busca"}
               </p>
-              {problems.length === 0 && (
+              {(problems || []).length === 0 && (
                 <Button onClick={() => setShowAddDialog(true)}>Registrar Primeiro Problema</Button>
               )}
             </div>

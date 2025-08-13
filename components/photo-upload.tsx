@@ -47,6 +47,15 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUplo
         continue
       }
 
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: `${file.name} excede o limite de 10MB`,
+          variant: "destructive",
+        })
+        continue
+      }
+
       try {
         const formData = new FormData()
         formData.append("file", file)
@@ -57,7 +66,36 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUplo
         })
 
         if (!response.ok) {
-          throw new Error("Upload failed")
+          let errorMessage = "Upload failed"
+
+          // Tentar ler a resposta como JSON primeiro
+          try {
+            const contentType = response.headers.get("content-type")
+            if (contentType && contentType.includes("application/json")) {
+              const errorData = await response.json()
+              errorMessage = errorData.error || errorMessage
+            } else {
+              // Se não for JSON, ler como texto
+              const errorText = await response.text()
+              if (errorText.includes("Request Entity Too Large")) {
+                errorMessage = "Arquivo muito grande"
+              } else if (errorText.includes("Payload Too Large")) {
+                errorMessage = "Arquivo muito grande"
+              } else {
+                errorMessage = errorText || errorMessage
+              }
+            }
+          } catch (parseError) {
+            // Se não conseguir ler a resposta, usar mensagem padrão
+            errorMessage = `Erro HTTP ${response.status}`
+          }
+
+          throw new Error(errorMessage)
+        }
+
+        const contentType = response.headers.get("content-type")
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Resposta inválida do servidor")
         }
 
         const result = await response.json()
@@ -70,7 +108,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUplo
         console.error("Upload error:", error)
         toast({
           title: "Erro no upload",
-          description: `Falha ao enviar ${file.name}`,
+          description: error instanceof Error ? error.message : `Falha ao enviar ${file.name}`,
           variant: "destructive",
         })
       }
