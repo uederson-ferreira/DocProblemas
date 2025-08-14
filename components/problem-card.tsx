@@ -39,6 +39,10 @@ const typeConfig = {
 }
 
 export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: ProblemCardProps) {
+  console.log("Problem data:", problem)
+  console.log("Problem photos:", problem.photos)
+  console.log("Problem problem_photos:", (problem as any).problem_photos)
+
   const [showW5H2, setShowW5H2] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState({
@@ -144,7 +148,9 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
         <div className="flex items-start justify-between">
           <div className="space-y-2 flex-1">
             <div className="flex items-center gap-3">
-              <h3 className="text-lg font-bold text-slate-900">PROBLEMA #{String(index + 1).padStart(3, "0")}</h3>
+              <h3 className="text-lg font-bold text-slate-900">
+                PROBLEMA #{String((problem as any).problem_number || index + 1).padStart(3, "0")}
+              </h3>
               {problem.status === "pendente" && (
                 <div className="flex items-center gap-1 text-red-600">
                   <AlertTriangle className="w-4 h-4" />
@@ -180,13 +186,6 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {problem.photos && problem.photos.length > 0 && (
-          <div>
-            <h4 className="font-semibold text-slate-900 mb-2">Fotos do Problema</h4>
-            <PhotoCarousel photos={problem.photos} />
-          </div>
-        )}
-
         {isEditing ? (
           <div className="bg-blue-50 p-4 rounded-lg space-y-4">
             <h4 className="font-semibold text-slate-900">Editar Problema</h4>
@@ -269,9 +268,27 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
             </div>
           </div>
         ) : (
-          <div>
-            <h4 className="font-semibold text-slate-900 mb-2">Descrição do Problema</h4>
-            <p className="text-slate-700 bg-slate-50 p-3 rounded-lg">{problem.description}</p>
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Seção da descrição - lado esquerdo */}
+            <div className="flex-1">
+              <h4 className="font-semibold text-slate-900 mb-2">Descrição do Problema</h4>
+              <p className="text-slate-700 bg-slate-50 p-3 rounded-lg whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                {problem.description}
+              </p>
+            </div>
+
+            {/* Seção das fotos - lado direito */}
+            {((problem.photos && problem.photos.length > 0) ||
+              ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
+              <div className="lg:w-80 flex-shrink-0">
+                <h4 className="font-semibold text-slate-900 mb-2">Fotos do Problema</h4>
+                <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
+                {/* Debug visual */}
+                <div className="text-xs text-gray-500 mt-1">
+                  Debug: {problem.photos?.length || (problem as any).problem_photos?.length || 0} fotos encontradas
+                </div>
+              </div>
+            )}
           </div>
         )}
 

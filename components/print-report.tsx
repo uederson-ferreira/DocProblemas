@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
+import { useState } from "react"
 import type { Problem, W5H2Plan, Photo } from "@/lib/supabase/client"
 
 interface PrintReportProps {
@@ -9,23 +10,96 @@ interface PrintReportProps {
 }
 
 export function PrintReport({ problems }: PrintReportProps) {
-  const handlePrint = () => {
-    const printWindow = window.open("", "_blank")
-    if (!printWindow) return
+  const [isLoading, setIsLoading] = useState(false)
 
-    const printContent = generatePrintHTML(problems)
+  const imageToBase64 = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx?.drawImage(img, 0, 0)
+        try {
+          const dataURL = canvas.toDataURL("image/jpeg", 0.8)
+          resolve(dataURL)
+        } catch (error) {
+          reject(error)
+        }
+      }
+      img.onerror = () => reject(new Error("Failed to load image"))
+      img.src = url
+    })
+  }
 
-    printWindow.document.write(printContent)
-    printWindow.document.close()
-    printWindow.focus()
-    printWindow.print()
-    printWindow.close()
+  const processImagesForPrint = async (problems: (Problem & { w5h2_plans: W5H2Plan[]; problem_photos: Photo[] })[]) => {
+    const processedProblems = []
+
+    for (const problem of problems) {
+      const processedPhotos = []
+
+      if (problem.problem_photos && problem.problem_photos.length > 0) {
+        for (const photo of problem.problem_photos) {
+          try {
+            const base64Image = await imageToBase64(photo.photo_url)
+            processedPhotos.push({
+              ...photo,
+              photo_url: base64Image,
+            })
+          } catch (error) {
+            console.error(`Erro ao processar imagem ${photo.filename}:`, error)
+            // Manter a URL original se falhar
+            processedPhotos.push(photo)
+          }
+        }
+      }
+
+      processedProblems.push({
+        ...problem,
+        problem_photos: processedPhotos,
+      })
+    }
+
+    return processedProblems
+  }
+
+  const handlePrint = async () => {
+    setIsLoading(true)
+
+    try {
+      const processedProblems = await processImagesForPrint(problems)
+      const printWindow = window.open("", "_blank")
+      if (!printWindow) return
+
+      const printContent = generatePrintHTML(processedProblems)
+
+      printWindow.document.write(printContent)
+      printWindow.document.close()
+      printWindow.focus()
+
+      setTimeout(() => {
+        printWindow.print()
+        printWindow.close()
+      }, 500)
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error)
+      alert("Erro ao gerar relatório. Tente novamente.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <Button variant="outline" onClick={handlePrint} className="flex items-center gap-2 bg-transparent">
+    <Button
+      variant="outline"
+      onClick={handlePrint}
+      disabled={isLoading}
+      className="flex items-center gap-2 bg-transparent"
+    >
       <Printer className="w-4 h-4" />
-      Imprimir Relatório
+      {isLoading ? "Preparando..." : "Imprimir Relatório"}
     </Button>
   )
 }
@@ -87,7 +161,13 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
         .photos-title { font-weight: bold; margin-bottom: 10px; color: #333; }
         .photos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; }
         .photo-item { text-align: center; }
-        .photo-item img { max-width: 100%; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; }
+        .photo-item img { 
+          max-width: 100%; 
+          height: 150px; 
+          object-fit: cover; 
+          border: 1px solid #ddd; 
+          border-radius: 4px;
+        }
         .photo-caption { font-size: 10px; color: #666; margin-top: 5px; }
         .w5h2-section { margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 4px; }
         .w5h2-title { font-weight: bold; margin-bottom: 10px; color: #333; }
@@ -125,10 +205,10 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
           ? '<div class="no-problems">Nenhum problema registrado</div>'
           : problems
               .map(
-                (problem, index) => `
+                (problem) => `
           <div class="problem">
             <div class="problem-header">
-              <div class="problem-title">Problema #${index + 1}</div>
+              <div class="problem-title">Problema #${String(problem.problem_number || 1).padStart(3, "0")}</div>
               <div class="severity-badge" style="background-color: ${severityColors[problem.severity as keyof typeof severityColors]}">
                 ${severityLabels[problem.severity as keyof typeof severityLabels]}
               </div>
