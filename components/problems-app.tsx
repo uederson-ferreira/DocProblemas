@@ -9,6 +9,7 @@ import { FilterControls } from "@/components/filter-controls"
 import { Plus, Download, AlertTriangle, LogOut } from "lucide-react"
 import type { Problem, W5H2Plan } from "@/lib/supabase/client"
 import { signOut } from "@/lib/actions"
+import { PrintReport } from "@/components/print-report"
 
 interface ProblemsAppProps {
   initialProblems: (Problem & { w5h2_plans: W5H2Plan[] })[]
@@ -104,6 +105,9 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
               <Download className="w-4 h-4" />
               Exportar
             </Button>
+
+            {/* Botão de impressão */}
+            <PrintReport problems={problems || []} />
           </div>
 
           <div className="flex-1">
