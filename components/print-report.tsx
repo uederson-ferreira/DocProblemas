@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
-import type { Problem, W5H2Plan } from "@/lib/supabase/client"
+import type { Problem, W5H2Plan, Photo } from "@/lib/supabase/client"
 
 interface PrintReportProps {
-  problems: (Problem & { w5h2_plans: W5H2Plan[] })[]
+  problems: (Problem & { w5h2_plans: W5H2Plan[]; problem_photos: Photo[] })[]
 }
 
 export function PrintReport({ problems }: PrintReportProps) {
@@ -30,7 +30,7 @@ export function PrintReport({ problems }: PrintReportProps) {
   )
 }
 
-function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[] })[]) {
+function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; problem_photos: Photo[] })[]) {
   const currentDate = new Date().toLocaleDateString("pt-BR")
   const totalProblems = problems.length
   const unresolvedProblems = problems.filter((p) => p.status === "pendente").length
@@ -83,14 +83,18 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[] })[]) {
         .severity-badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; }
         .problem-meta { display: flex; gap: 20px; margin: 10px 0; font-size: 11px; color: #666; }
         .problem-description { margin: 10px 0; }
+        .photos-section { margin: 15px 0; }
+        .photos-title { font-weight: bold; margin-bottom: 10px; color: #333; }
+        .photos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .photo-item { text-align: center; }
+        .photo-item img { max-width: 100%; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; }
+        .photo-caption { font-size: 10px; color: #666; margin-top: 5px; }
         .w5h2-section { margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 4px; }
         .w5h2-title { font-weight: bold; margin-bottom: 10px; color: #333; }
         .w5h2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .w5h2-item { margin-bottom: 8px; }
         .w5h2-label { font-weight: bold; color: #555; font-size: 11px; }
         .w5h2-value { margin-top: 2px; font-size: 11px; }
-        .photos-section { margin-top: 10px; }
-        .photos-title { font-weight: bold; margin-bottom: 5px; }
         .no-problems { text-align: center; padding: 40px; color: #666; }
       </style>
     </head>
@@ -143,6 +147,28 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[] })[]) {
             </div>
 
             ${
+              problem.problem_photos && problem.problem_photos.length > 0
+                ? `
+              <div class="photos-section">
+                <div class="photos-title">📷 Fotos do Problema</div>
+                <div class="photos-grid">
+                  ${problem.problem_photos
+                    .map(
+                      (photo) => `
+                    <div class="photo-item">
+                      <img src="${photo.photo_url}" alt="${photo.filename}" />
+                      <div class="photo-caption">${photo.filename}</div>
+                    </div>
+                  `,
+                    )
+                    .join("")}
+                </div>
+              </div>
+            `
+                : ""
+            }
+
+            ${
               problem.w5h2_plans && problem.w5h2_plans.length > 0
                 ? `
               <div class="w5h2-section">
@@ -158,11 +184,11 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[] })[]) {
                   </div>
                   <div class="w5h2-item">
                     <div class="w5h2-label">QUANDO (When):</div>
-                    <div class="w5h2-value">${problem.w5h2_plans[0].when || "Não preenchido"}</div>
+                    <div class="w5h2-value">${problem.w5h2_plans[0].when_plan || "Não preenchido"}</div>
                   </div>
                   <div class="w5h2-item">
                     <div class="w5h2-label">ONDE (Where):</div>
-                    <div class="w5h2-value">${problem.w5h2_plans[0].where || "Não preenchido"}</div>
+                    <div class="w5h2-value">${problem.w5h2_plans[0].where_plan || "Não preenchido"}</div>
                   </div>
                   <div class="w5h2-item">
                     <div class="w5h2-label">QUEM (Who):</div>

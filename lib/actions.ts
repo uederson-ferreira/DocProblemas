@@ -259,3 +259,135 @@ export async function saveW5H2Plan(prevState: any, formData: FormData) {
     return { error: "Failed to save plan" }
   }
 }
+
+export async function getProblems() {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return []
+  }
+
+  try {
+    const { data: problems, error } = await supabase
+      .from("problems")
+      .select(`
+        *,
+        problem_photos (
+          id,
+          photo_url,
+          filename
+        ),
+        w5h2_plans (
+          id,
+          what,
+          why,
+          when_plan,
+          where_plan,
+          who,
+          how,
+          how_much
+        )
+      `)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Get problems error:", error)
+      return []
+    }
+
+    return problems || []
+  } catch (error) {
+    console.error("Get problems error:", error)
+    return []
+  }
+}
+
+export async function updateProblem(
+  problemId: string,
+  updateData: {
+    title?: string
+    description?: string
+    type?: string
+    severity?: string
+    location?: string
+  },
+) {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "You must be logged in" }
+  }
+
+  try {
+    const { error } = await supabase
+      .from("problems")
+      .update({
+        ...updateData,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", problemId)
+      .eq("user_id", user.id)
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    revalidatePath("/")
+    return { success: "Problem updated successfully" }
+  } catch (error) {
+    console.error("Update problem error:", error)
+    return { error: "Failed to update problem" }
+  }
+}
+
+export async function deleteProblem(problemId: string) {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "You must be logged in" }
+  }
+
+  try {
+    // Delete related photos first
+    const { error: photoError } = await supabase.from("problem_photos").delete().eq("problem_id", problemId)
+
+    if (photoError) {
+      console.error("Delete photos error:", photoError)
+      // Continue with problem deletion even if photos fail
+    }
+
+    // Delete related W5H2 plans
+    const { error: planError } = await supabase.from("w5h2_plans").delete().eq("problem_id", problemId)
+
+    if (planError) {
+      console.error("Delete plans error:", planError)
+      // Continue with problem deletion even if plans fail
+    }
+
+    // Delete the problem
+    const { error } = await supabase.from("problems").delete().eq("id", problemId).eq("user_id", user.id)
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    revalidatePath("/")
+    return { success: "Problem deleted successfully" }
+  } catch (error) {
+    console.error("Delete problem error:", error)
+    return { error: "Failed to delete problem" }
+  }
+}

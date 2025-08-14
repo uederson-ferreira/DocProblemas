@@ -1,6 +1,7 @@
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ProblemsApp } from "@/components/problems-app"
+import { getProblems } from "@/lib/actions"
 
 export default async function HomePage() {
   // If Supabase is not configured, show setup message directly
@@ -23,14 +24,7 @@ export default async function HomePage() {
     redirect("/auth/login")
   }
 
-  // Fetch problems with their 5W2H plans
-  const { data: problems = [] } = await supabase
-    .from("problems")
-    .select(`
-      *,
-      w5h2_plans (*)
-    `)
-    .order("created_at", { ascending: false })
+  const problems = await getProblems()
 
   return <ProblemsApp initialProblems={problems} user={user} />
 }

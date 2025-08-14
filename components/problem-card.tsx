@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, ChevronUp, AlertTriangle } from "lucide-react"
+import { ChevronDown, ChevronUp, AlertTriangle, Edit, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { updateProblemStatus, saveW5H2Plan } from "@/lib/actions"
+import { updateProblemStatus, saveW5H2Plan, updateProblem, deleteProblem } from "@/lib/actions"
 import { useActionState } from "react"
 import { PhotoCarousel } from "./photo-carousel"
 
@@ -20,6 +20,7 @@ interface ProblemCardProps {
   plan?: W5H2Plan
   index: number
   onUpdate: (updatedProblem: Problem & { w5h2_plans: W5H2Plan[] }) => void
+  onDelete: (problemId: string) => void
 }
 
 const severityConfig = {
@@ -37,8 +38,17 @@ const typeConfig = {
   licenciamento: "Licenciamento",
 }
 
-export function ProblemCard({ problem, plan, index, onUpdate }: ProblemCardProps) {
+export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: ProblemCardProps) {
   const [showW5H2, setShowW5H2] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editData, setEditData] = useState({
+    title: problem.title || "",
+    description: problem.description,
+    type: problem.type,
+    severity: problem.severity,
+    location: problem.location || "",
+  })
+
   const [w5h2Data, setW5h2Data] = useState({
     what: plan?.what || "",
     why: plan?.why || "",
@@ -51,6 +61,8 @@ export function ProblemCard({ problem, plan, index, onUpdate }: ProblemCardProps
 
   const [statusState, statusAction] = useActionState(updateProblemStatus, null)
   const [planState, planAction] = useActionState(saveW5H2Plan, null)
+  const [updateState, updateAction] = useActionState(updateProblem, null)
+  const [deleteState, deleteAction] = useActionState(deleteProblem, null)
 
   const handleResolvedChange = async (checked: boolean) => {
     const newStatus = checked ? "resolvido" : "pendente"
@@ -74,7 +86,6 @@ export function ProblemCard({ problem, plan, index, onUpdate }: ProblemCardProps
 
     if (!result?.error) {
       setShowW5H2(false)
-      // Update the problem with the new plan
       const updatedPlan: W5H2Plan = {
         id: plan?.id || crypto.randomUUID(),
         problem_id: problem.id,
@@ -96,6 +107,29 @@ export function ProblemCard({ problem, plan, index, onUpdate }: ProblemCardProps
     }
   }
 
+  const handleEditSave = async () => {
+    const result = await updateProblem(problem.id, editData)
+
+    if (!result?.error) {
+      setIsEditing(false)
+      onUpdate({
+        ...problem,
+        ...editData,
+        updated_at: new Date().toISOString(),
+      })
+    }
+  }
+
+  const handleDelete = async () => {
+    if (confirm("Tem certeza que deseja deletar este problema? Esta ação não pode ser desfeita.")) {
+      const result = await deleteProblem(problem.id)
+
+      if (!result?.error) {
+        onDelete(problem.id)
+      }
+    }
+  }
+
   const createdDate = new Date(problem.created_at).toLocaleDateString("pt-BR")
   const createdTime = new Date(problem.created_at).toLocaleTimeString("pt-BR")
 
@@ -108,7 +142,7 @@ export function ProblemCard({ problem, plan, index, onUpdate }: ProblemCardProps
     >
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
-          <div className="space-y-2">
+          <div className="space-y-2 flex-1">
             <div className="flex items-center gap-3">
               <h3 className="text-lg font-bold text-slate-900">PROBLEMA #{String(index + 1).padStart(3, "0")}</h3>
               {problem.status === "pendente" && (
@@ -128,6 +162,20 @@ export function ProblemCard({ problem, plan, index, onUpdate }: ProblemCardProps
               📅 {createdDate} às {createdTime} • 📍 {problem.location || "Local não especificado"}
             </p>
           </div>
+
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)}>
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDelete}
+              className="text-red-600 hover:text-red-700 bg-transparent"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
 
@@ -139,10 +187,93 @@ export function ProblemCard({ problem, plan, index, onUpdate }: ProblemCardProps
           </div>
         )}
 
-        <div>
-          <h4 className="font-semibold text-slate-900 mb-2">Descrição do Problema</h4>
-          <p className="text-slate-700 bg-slate-50 p-3 rounded-lg">{problem.description}</p>
-        </div>
+        {isEditing ? (
+          <div className="bg-blue-50 p-4 rounded-lg space-y-4">
+            <h4 className="font-semibold text-slate-900">Editar Problema</h4>
+
+            {updateState?.error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{updateState.error}</div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor={`edit-title-${problem.id}`}>Título</Label>
+                <Input
+                  id={`edit-title-${problem.id}`}
+                  value={editData.title}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, title: e.target.value }))}
+                  placeholder="Título do problema..."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor={`edit-location-${problem.id}`}>Local</Label>
+                <Input
+                  id={`edit-location-${problem.id}`}
+                  value={editData.location}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, location: e.target.value }))}
+                  placeholder="Local do problema..."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor={`edit-type-${problem.id}`}>Tipo</Label>
+                <select
+                  id={`edit-type-${problem.id}`}
+                  value={editData.type}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, type: e.target.value as any }))}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="desmatamento">Desmatamento</option>
+                  <option value="seguranca">Segurança</option>
+                  <option value="poluicao">Poluição</option>
+                  <option value="infraestrutura">Infraestrutura</option>
+                  <option value="licenciamento">Licenciamento</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor={`edit-severity-${problem.id}`}>Severidade</Label>
+                <select
+                  id={`edit-severity-${problem.id}`}
+                  value={editData.severity}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, severity: e.target.value as any }))}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="baixo">Baixo</option>
+                  <option value="medio">Médio</option>
+                  <option value="alto">Alto</option>
+                  <option value="critico">Crítico</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor={`edit-description-${problem.id}`}>Descrição</Label>
+                <Textarea
+                  id={`edit-description-${problem.id}`}
+                  value={editData.description}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="Descrição detalhada do problema..."
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={handleEditSave} size="sm">
+                Salvar Alterações
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <h4 className="font-semibold text-slate-900 mb-2">Descrição do Problema</h4>
+            <p className="text-slate-700 bg-slate-50 p-3 rounded-lg">{problem.description}</p>
+          </div>
+        )}
 
         {/* Controles de Resolução e 5W2H */}
         <div className="border-t pt-4 space-y-4">

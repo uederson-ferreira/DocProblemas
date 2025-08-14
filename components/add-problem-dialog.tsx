@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { Problem, W5H2Plan } from "@/lib/supabase/client"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -35,34 +35,10 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
 
   const [photos, setPhotos] = useState<UploadedPhoto[]>([])
 
-  const [state, formAction] = useActionState(createProblem, null)
+  const [state, formAction, isPending] = useActionState(createProblem, null)
 
-  const handleSubmit = async (formDataObj: FormData) => {
-    photos.forEach((photo, index) => {
-      formDataObj.append(`photo_${index}`, photo.url)
-      formDataObj.append(`filename_${index}`, photo.filename)
-    })
-    formDataObj.append("photo_count", photos.length.toString())
-
-    const result = await formAction(formDataObj)
-
-    if (!result?.error) {
-      // Create a mock problem object for immediate UI update
-      const newProblem: Problem & { w5h2_plans: W5H2Plan[] } = {
-        id: crypto.randomUUID(),
-        title: formData.title,
-        description: formData.description,
-        type: formData.type,
-        severity: formData.severity,
-        location: formData.location,
-        status: "pendente",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        user_id: "",
-        w5h2_plans: [],
-      }
-
-      onAdd(newProblem)
+  useEffect(() => {
+    if (state?.success) {
       setFormData({
         title: "",
         location: "",
@@ -72,10 +48,19 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
       })
       setPhotos([])
       onOpenChange(false)
-
-      // Refresh the page to get the actual data from the server
-      window.location.reload()
     }
+  }, [state?.success, onOpenChange])
+
+  const enhancedFormAction = (formDataObj: FormData) => {
+    // Add photos to form data
+    photos.forEach((photo, index) => {
+      formDataObj.append(`photo_${index}`, photo.url)
+      formDataObj.append(`filename_${index}`, photo.filename)
+    })
+    formDataObj.append("photo_count", photos.length.toString())
+
+    // Call the original form action
+    formAction(formDataObj)
   }
 
   return (
@@ -85,7 +70,7 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
           <DialogTitle>Novo Problema</DialogTitle>
         </DialogHeader>
 
-        <form action={handleSubmit} className="space-y-4">
+        <form action={enhancedFormAction} className="space-y-4">
           {state?.error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{state.error}</div>
           )}
@@ -170,7 +155,9 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
           <PhotoUpload photos={photos} onPhotosChange={setPhotos} maxPhotos={5} />
 
           <div className="flex gap-2 pt-4">
-            <Button type="submit">Adicionar Problema</Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Salvando..." : "Adicionar Problema"}
+            </Button>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>

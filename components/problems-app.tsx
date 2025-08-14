@@ -48,6 +48,10 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
     setProblems((prev) => (prev || []).map((problem) => (problem.id === updatedProblem.id ? updatedProblem : problem)))
   }
 
+  const handleProblemDeleted = (problemId: string) => {
+    setProblems((prev) => (prev || []).filter((problem) => problem.id !== problemId))
+  }
+
   const handleExportData = () => {
     const dataStr = JSON.stringify(problems || [], null, 2)
     const dataBlob = new Blob([dataStr], { type: "application/json" })
@@ -150,6 +154,7 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
                 plan={problem.w5h2_plans[0]}
                 index={index}
                 onUpdate={handleProblemUpdated}
+                onDelete={handleProblemDeleted}
               />
             ))
           )}
