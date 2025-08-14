@@ -259,6 +259,118 @@ export async function saveW5H2Plan(prevState: any, formData: FormData) {
   }
 }
 
+export async function createW5H2Plan(
+  problemId: string,
+  planData: {
+    what: string
+    why: string
+    when_plan: string
+    where_plan: string
+    who: string
+    how: string
+    how_much: string
+  },
+) {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "You must be logged in" }
+  }
+
+  try {
+    const { error } = await supabase.from("w5h2_plans").insert({
+      problem_id: problemId,
+      ...planData,
+    })
+
+    if (error) {
+      console.error("Create W5H2 plan error:", error)
+      return { error: error.message }
+    }
+
+    revalidatePath("/")
+    return { success: "Plan created successfully" }
+  } catch (error) {
+    console.error("Create W5H2 plan error:", error)
+    return { error: "Failed to create plan" }
+  }
+}
+
+export async function updateW5H2Plan(
+  planId: string,
+  updateData: Partial<{
+    what: string
+    why: string
+    when_plan: string
+    where_plan: string
+    who: string
+    how: string
+    how_much: string
+  }>,
+) {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "You must be logged in" }
+  }
+
+  try {
+    const { error } = await supabase
+      .from("w5h2_plans")
+      .update({
+        ...updateData,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", planId)
+
+    if (error) {
+      console.error("Update W5H2 plan error:", error)
+      return { error: error.message }
+    }
+
+    revalidatePath("/")
+    return { success: "Plan updated successfully" }
+  } catch (error) {
+    console.error("Update W5H2 plan error:", error)
+    return { error: "Failed to update plan" }
+  }
+}
+
+export async function deleteW5H2Plan(planId: string) {
+  const cookieStore = cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "You must be logged in" }
+  }
+
+  try {
+    const { error } = await supabase.from("w5h2_plans").delete().eq("id", planId)
+
+    if (error) {
+      console.error("Delete W5H2 plan error:", error)
+      return { error: error.message }
+    }
+
+    revalidatePath("/")
+    return { success: "Plan deleted successfully" }
+  } catch (error) {
+    console.error("Delete W5H2 plan error:", error)
+    return { error: "Failed to delete plan" }
+  }
+}
+
 export async function getProblems() {
   const cookieStore = cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
@@ -288,7 +400,9 @@ export async function getProblems() {
           where_plan,
           who,
           how,
-          how_much
+          how_much,
+          created_at,
+          updated_at
         )
       `)
       .eq("user_id", user.id)

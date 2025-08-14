@@ -35,7 +35,7 @@ export function PhotoCarousel({ photos, className = "" }: PhotoCarouselProps) {
           alt={photos[0].filename}
           width={400}
           height={300}
-          className="w-full h-48 object-cover"
+          className="w-full h-48 object-contain bg-gray-50"
         />
       </div>
     )
@@ -56,7 +56,7 @@ export function PhotoCarousel({ photos, className = "" }: PhotoCarouselProps) {
         alt={photos[currentIndex].filename}
         width={400}
         height={300}
-        className="w-full h-48 object-cover"
+        className="w-full h-48 object-contain bg-gray-50"
       />
 
       {/* Navigation buttons */}

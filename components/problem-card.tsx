@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import type { Problem, W5H2Plan, Photo } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -11,9 +13,10 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { ChevronDown, ChevronUp, AlertTriangle, Edit, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { updateProblemStatus, saveW5H2Plan, updateProblem, deleteProblem } from "@/lib/actions"
+import { updateProblemStatus, saveW5H2Plan, updateProblem, deleteProblem, createW5H2Plan } from "@/lib/actions"
 import { useActionState } from "react"
 import { PhotoCarousel } from "./photo-carousel"
+import { W5H2List } from "./w5h2-list"
 
 interface ProblemCardProps {
   problem: Problem & { w5h2_plans: W5H2Plan[]; photos?: Photo[] }
@@ -55,13 +58,13 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
   })
 
   const [w5h2Data, setW5h2Data] = useState({
-    what: plan?.what || "",
-    why: plan?.why || "",
-    when: plan?.when_plan || "",
-    where: plan?.where_plan || "",
-    who: plan?.who || "",
-    how: plan?.how || "",
-    howMuch: plan?.how_much || "",
+    what: "",
+    why: "",
+    when: "",
+    where: "",
+    who: "",
+    how: "",
+    howMuch: "",
   })
 
   const [statusState, statusAction] = useActionState(updateProblemStatus, null)
@@ -86,28 +89,48 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
     setShowW5H2(checked)
   }
 
-  const handleW5H2Save = async (formData: FormData) => {
-    const result = await planAction(formData)
+  const handleW5H2Save = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault() // Previne o comportamento padrão do formulário
+
+    const formData = new FormData(e.currentTarget)
+    const planData = {
+      what: formData.get("what")?.toString() || "",
+      why: formData.get("why")?.toString() || "",
+      when_plan: formData.get("when")?.toString() || "",
+      where_plan: formData.get("where")?.toString() || "",
+      who: formData.get("who")?.toString() || "",
+      how: formData.get("how")?.toString() || "",
+      how_much: formData.get("howMuch")?.toString() || "",
+    }
+
+    const result = await createW5H2Plan(problem.id, planData)
 
     if (!result?.error) {
-      setShowW5H2(false)
-      const updatedPlan: W5H2Plan = {
-        id: plan?.id || crypto.randomUUID(),
+      // Não fechar o formulário, apenas limpar os campos
+      setW5h2Data({
+        what: "",
+        why: "",
+        when: "",
+        where: "",
+        who: "",
+        how: "",
+        howMuch: "",
+      })
+
+      // Atualizar lista de planos
+      const newPlan: W5H2Plan = {
+        id: crypto.randomUUID(),
         problem_id: problem.id,
-        what: formData.get("what")?.toString() || "",
-        why: formData.get("why")?.toString() || "",
-        when_plan: formData.get("when")?.toString() || "",
-        where_plan: formData.get("where")?.toString() || "",
-        who: formData.get("who")?.toString() || "",
-        how: formData.get("how")?.toString() || "",
-        how_much: formData.get("howMuch")?.toString() || "",
-        created_at: plan?.created_at || new Date().toISOString(),
+        ...planData,
+        resolved: false,
+        observations: "",
+        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
 
       onUpdate({
         ...problem,
-        w5h2_plans: [updatedPlan],
+        w5h2_plans: [...(problem.w5h2_plans || []), newPlan],
       })
     }
   }
@@ -347,124 +370,142 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
 
           {/* Formulário 5W2H */}
           {showW5H2 && (
-            <form action={handleW5H2Save} className="bg-slate-50 p-4 rounded-lg space-y-4">
-              <input type="hidden" name="problemId" value={problem.id} />
+            <div className="bg-slate-50 p-4 rounded-lg space-y-6">
+              <form onSubmit={handleW5H2Save} className="space-y-4">
+                <input type="hidden" name="problemId" value={problem.id} />
 
-              <h4 className="font-semibold text-slate-900 mb-3">Plano de Ação 5W2H</h4>
+                <h4 className="font-semibold text-slate-900 mb-3">Plano de Ação 5W2H</h4>
 
-              {planState?.error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{planState.error}</div>
+                {planState?.error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                    {planState.error}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor={`what-${problem.id}`} className="text-sm font-medium">
+                      O QUE (What) - O que será feito?
+                    </Label>
+                    <Textarea
+                      id={`what-${problem.id}`}
+                      name="what"
+                      value={w5h2Data.what}
+                      onChange={(e) => setW5h2Data((prev) => ({ ...prev, what: e.target.value }))}
+                      placeholder="Descreva a ação que será tomada..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor={`why-${problem.id}`} className="text-sm font-medium">
+                      POR QUE (Why) - Por que será feito?
+                    </Label>
+                    <Textarea
+                      id={`why-${problem.id}`}
+                      name="why"
+                      value={w5h2Data.why}
+                      onChange={(e) => setW5h2Data((prev) => ({ ...prev, why: e.target.value }))}
+                      placeholder="Justifique a necessidade da ação..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor={`when-${problem.id}`} className="text-sm font-medium">
+                      QUANDO (When) - Quando será feito?
+                    </Label>
+                    <Input
+                      id={`when-${problem.id}`}
+                      name="when"
+                      value={w5h2Data.when}
+                      onChange={(e) => setW5h2Data((prev) => ({ ...prev, when: e.target.value }))}
+                      placeholder="Data/prazo para execução..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor={`where-${problem.id}`} className="text-sm font-medium">
+                      ONDE (Where) - Onde será feito?
+                    </Label>
+                    <Input
+                      id={`where-${problem.id}`}
+                      name="where"
+                      value={w5h2Data.where}
+                      onChange={(e) => setW5h2Data((prev) => ({ ...prev, where: e.target.value }))}
+                      placeholder="Local de execução..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor={`who-${problem.id}`} className="text-sm font-medium">
+                      QUEM (Who) - Quem será responsável?
+                    </Label>
+                    <Input
+                      id={`who-${problem.id}`}
+                      name="who"
+                      value={w5h2Data.who}
+                      onChange={(e) => setW5h2Data((prev) => ({ ...prev, who: e.target.value }))}
+                      placeholder="Responsável pela execução..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor={`how-${problem.id}`} className="text-sm font-medium">
+                      COMO (How) - Como será feito?
+                    </Label>
+                    <Textarea
+                      id={`how-${problem.id}`}
+                      name="how"
+                      value={w5h2Data.how}
+                      onChange={(e) => setW5h2Data((prev) => ({ ...prev, how: e.target.value }))}
+                      placeholder="Método/processo de execução..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label htmlFor={`howMuch-${problem.id}`} className="text-sm font-medium">
+                      QUANTO (How Much) - Quanto custará?
+                    </Label>
+                    <Input
+                      id={`howMuch-${problem.id}`}
+                      name="howMuch"
+                      value={w5h2Data.howMuch}
+                      onChange={(e) => setW5h2Data((prev) => ({ ...prev, howMuch: e.target.value }))}
+                      placeholder="Custo estimado..."
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button type="submit" size="sm">
+                    Salvar Plano 5W2H
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setShowW5H2(false)}>
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+
+              {problem.w5h2_plans && problem.w5h2_plans.length > 0 && (
+                <div className="border-t pt-4">
+                  <W5H2List
+                    plans={problem.w5h2_plans}
+                    onUpdate={(updatedPlans) => {
+                      onUpdate({
+                        ...problem,
+                        w5h2_plans: updatedPlans,
+                      })
+                    }}
+                  />
+                </div>
               )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor={`what-${problem.id}`} className="text-sm font-medium">
-                    O QUE (What) - O que será feito?
-                  </Label>
-                  <Textarea
-                    id={`what-${problem.id}`}
-                    name="what"
-                    value={w5h2Data.what}
-                    onChange={(e) => setW5h2Data((prev) => ({ ...prev, what: e.target.value }))}
-                    placeholder="Descreva a ação que será tomada..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor={`why-${problem.id}`} className="text-sm font-medium">
-                    POR QUE (Why) - Por que será feito?
-                  </Label>
-                  <Textarea
-                    id={`why-${problem.id}`}
-                    name="why"
-                    value={w5h2Data.why}
-                    onChange={(e) => setW5h2Data((prev) => ({ ...prev, why: e.target.value }))}
-                    placeholder="Justifique a necessidade da ação..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor={`when-${problem.id}`} className="text-sm font-medium">
-                    QUANDO (When) - Quando será feito?
-                  </Label>
-                  <Input
-                    id={`when-${problem.id}`}
-                    name="when"
-                    value={w5h2Data.when}
-                    onChange={(e) => setW5h2Data((prev) => ({ ...prev, when: e.target.value }))}
-                    placeholder="Data/prazo para execução..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor={`where-${problem.id}`} className="text-sm font-medium">
-                    ONDE (Where) - Onde será feito?
-                  </Label>
-                  <Input
-                    id={`where-${problem.id}`}
-                    name="where"
-                    value={w5h2Data.where}
-                    onChange={(e) => setW5h2Data((prev) => ({ ...prev, where: e.target.value }))}
-                    placeholder="Local de execução..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor={`who-${problem.id}`} className="text-sm font-medium">
-                    QUEM (Who) - Quem será responsável?
-                  </Label>
-                  <Input
-                    id={`who-${problem.id}`}
-                    name="who"
-                    value={w5h2Data.who}
-                    onChange={(e) => setW5h2Data((prev) => ({ ...prev, who: e.target.value }))}
-                    placeholder="Responsável pela execução..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor={`how-${problem.id}`} className="text-sm font-medium">
-                    COMO (How) - Como será feito?
-                  </Label>
-                  <Textarea
-                    id={`how-${problem.id}`}
-                    name="how"
-                    value={w5h2Data.how}
-                    onChange={(e) => setW5h2Data((prev) => ({ ...prev, how: e.target.value }))}
-                    placeholder="Método/processo de execução..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor={`howMuch-${problem.id}`} className="text-sm font-medium">
-                    QUANTO (How Much) - Quanto custará?
-                  </Label>
-                  <Input
-                    id={`howMuch-${problem.id}`}
-                    name="howMuch"
-                    value={w5h2Data.howMuch}
-                    onChange={(e) => setW5h2Data((prev) => ({ ...prev, howMuch: e.target.value }))}
-                    placeholder="Custo estimado..."
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <Button type="submit" size="sm">
-                  Salvar Plano 5W2H
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => setShowW5H2(false)}>
-                  Cancelar
-                </Button>
-              </div>
-            </form>
+            </div>
           )}
         </div>
       </CardContent>

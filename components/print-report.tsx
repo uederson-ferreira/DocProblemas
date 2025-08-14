@@ -142,8 +142,15 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
         @media print {
           @page { margin: 1cm; }
           body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4; }
+          .problem { page-break-inside: avoid; }
         }
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        body { 
+          font-family: Arial, sans-serif; 
+          margin: 0; 
+          padding: 20px; 
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
         .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
         .header h1 { margin: 0; color: #333; font-size: 24px; }
         .header p { margin: 5px 0; color: #666; }
@@ -151,30 +158,107 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
         .stat { text-align: center; }
         .stat-number { font-size: 24px; font-weight: bold; color: #333; }
         .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
-        .problem { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; page-break-inside: avoid; }
+        .problem { 
+          margin: 20px 0; 
+          padding: 15px; 
+          border: 1px solid #ddd; 
+          border-radius: 8px; 
+          page-break-inside: avoid;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
         .problem-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .problem-title { font-weight: bold; font-size: 14px; }
         .severity-badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; }
-        .problem-meta { display: flex; gap: 20px; margin: 10px 0; font-size: 11px; color: #666; }
-        .problem-description { margin: 10px 0; }
-        .photos-section { margin: 15px 0; }
+        .problem-meta { display: flex; gap: 20px; margin: 10px 0; font-size: 11px; color: #666; flex-wrap: wrap; }
+        
+        /* Layout similar à interface - descrição e recomendações à esquerda, fotos à direita */
+        .problem-content { 
+          display: flex; 
+          gap: 20px; 
+          margin: 15px 0;
+          align-items: flex-start;
+        }
+        .problem-left { 
+          flex: 1; 
+          min-width: 0;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        .problem-right { 
+          width: 300px; 
+          flex-shrink: 0;
+        }
+        
+        .problem-description { 
+          margin: 10px 0; 
+          word-wrap: break-word; 
+          overflow-wrap: break-word; 
+          white-space: pre-wrap; 
+          max-width: 100%;
+          hyphens: auto;
+        }
+        .recommendations-section {
+          margin: 15px 0;
+          padding: 10px;
+          background: #f0f9ff;
+          border-left: 4px solid #3b82f6;
+          border-radius: 4px;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          white-space: pre-wrap;
+          max-width: 100%;
+          hyphens: auto;
+        }
+        .photos-section { margin: 0; }
         .photos-title { font-weight: bold; margin-bottom: 10px; color: #333; }
-        .photos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        
+        /* Fotos em coluna vertical para caber melhor no espaço */
+        .photos-grid { 
+          display: flex; 
+          flex-direction: column; 
+          gap: 10px; 
+        }
         .photo-item { text-align: center; }
         .photo-item img { 
           max-width: 100%; 
-          height: 150px; 
-          object-fit: cover; 
+          max-height: 200px; 
+          object-fit: contain; 
           border: 1px solid #ddd; 
           border-radius: 4px;
+          background: #f9f9f9;
         }
         .photo-caption { font-size: 10px; color: #666; margin-top: 5px; }
+        
+        /* Layout responsivo para impressão */
+        @media print {
+          .problem-content { 
+            flex-direction: column; 
+          }
+          .problem-right { 
+            width: 100%; 
+            margin-top: 15px;
+          }
+          .photos-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 10px; 
+          }
+        }
+        
         .w5h2-section { margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 4px; }
         .w5h2-title { font-weight: bold; margin-bottom: 10px; color: #333; }
         .w5h2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .w5h2-item { margin-bottom: 8px; }
         .w5h2-label { font-weight: bold; color: #555; font-size: 11px; }
-        .w5h2-value { margin-top: 2px; font-size: 11px; }
+        .w5h2-value { 
+          margin-top: 2px; 
+          font-size: 11px; 
+          word-wrap: break-word; 
+          overflow-wrap: break-word;
+          white-space: pre-wrap;
+          hyphens: auto;
+        }
         .no-problems { text-align: center; padding: 40px; color: #666; }
       </style>
     </head>
@@ -221,43 +305,49 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
               ${problem.location ? `<div><strong>Local:</strong> ${problem.location}</div>` : ""}
             </div>
             
-            <div class="problem-description">
-              <strong>Descrição:</strong><br>
-              ${problem.description}
-            </div>
-
-            ${
-              (problem as any).recommendations
-                ? `
-              <div class="problem-description">
-                <strong>💡 Recomendações:</strong><br>
-                ${(problem as any).recommendations}
-              </div>
-            `
-                : ""
-            }
-
-            ${
-              problem.problem_photos && problem.problem_photos.length > 0
-                ? `
-              <div class="photos-section">
-                <div class="photos-title">📷 Fotos do Problema</div>
-                <div class="photos-grid">
-                  ${problem.problem_photos
-                    .map(
-                      (photo) => `
-                    <div class="photo-item">
-                      <img src="${photo.photo_url}" alt="${photo.filename}" />
-                      <div class="photo-caption">${photo.filename}</div>
-                    </div>
-                  `,
-                    )
-                    .join("")}
+            <div class="problem-content">
+              <div class="problem-left">
+                <div class="problem-description">
+                  <strong>Descrição:</strong><br>
+                  ${problem.description}
                 </div>
+
+                ${
+                  (problem as any).recommendations
+                    ? `
+                  <div class="recommendations-section">
+                    <strong>💡 Recomendações:</strong><br>
+                    ${(problem as any).recommendations}
+                  </div>
+                `
+                    : ""
+                }
               </div>
-            `
-                : ""
-            }
+
+              ${
+                problem.problem_photos && problem.problem_photos.length > 0
+                  ? `
+                <div class="problem-right">
+                  <div class="photos-section">
+                    <div class="photos-title">📷 Fotos do Problema</div>
+                    <div class="photos-grid">
+                      ${problem.problem_photos
+                        .map(
+                          (photo) => `
+                        <div class="photo-item">
+                          <img src="${photo.photo_url}" alt="${photo.filename}" />
+                          <div class="photo-caption">${photo.filename}</div>
+                        </div>
+                      `,
+                        )
+                        .join("")}
+                    </div>
+                  </div>
+                </div>
+              `
+                  : ""
+              }
+            </div>
 
             ${
               problem.w5h2_plans && problem.w5h2_plans.length > 0
