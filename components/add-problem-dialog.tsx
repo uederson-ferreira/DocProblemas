@@ -31,6 +31,7 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
     type: "" as Problem["type"],
     severity: "medio" as Problem["severity"],
     description: "",
+    recommendations: "",
   })
 
   const [photos, setPhotos] = useState<UploadedPhoto[]>([])
@@ -45,6 +46,7 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
         type: "" as Problem["type"],
         severity: "medio",
         description: "",
+        recommendations: "",
       })
       setPhotos([])
       onOpenChange(false)
@@ -149,6 +151,18 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
               placeholder="Descreva detalhadamente o problema encontrado..."
               rows={4}
               required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="recommendations">Recomendações</Label>
+            <Textarea
+              id="recommendations"
+              name="recommendations"
+              value={formData.recommendations}
+              onChange={(e) => setFormData((prev) => ({ ...prev, recommendations: e.target.value }))}
+              placeholder="Suas recomendações para solução..."
+              rows={3}
             />
           </div>
 

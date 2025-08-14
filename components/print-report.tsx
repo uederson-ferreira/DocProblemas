@@ -227,6 +227,17 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
             </div>
 
             ${
+              (problem as any).recommendations
+                ? `
+              <div class="problem-description">
+                <strong>💡 Recomendações:</strong><br>
+                ${(problem as any).recommendations}
+              </div>
+            `
+                : ""
+            }
+
+            ${
               problem.problem_photos && problem.problem_photos.length > 0
                 ? `
               <div class="photos-section">

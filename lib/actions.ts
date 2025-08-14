@@ -98,6 +98,7 @@ export async function createProblem(prevState: any, formData: FormData) {
   const type = formData.get("type")?.toString()
   const severity = formData.get("severity")?.toString()
   const location = formData.get("location")?.toString()
+  const recommendations = formData.get("recommendations")?.toString()
 
   if (!title || !description || !type || !severity) {
     return { error: "All required fields must be filled" }
@@ -112,12 +113,14 @@ export async function createProblem(prevState: any, formData: FormData) {
         type,
         severity,
         location,
+        recommendations: recommendations || null,
         user_id: user.id,
       })
       .select("id")
       .single()
 
     if (problemError) {
+      console.error("Problem insert error:", problemError)
       return { error: problemError.message }
     }
 
@@ -144,7 +147,6 @@ export async function createProblem(prevState: any, formData: FormData) {
 
         if (photoError) {
           console.error("Photo insert error:", photoError)
-          // Don't fail the whole operation if photos fail
         }
       }
     }
@@ -153,7 +155,7 @@ export async function createProblem(prevState: any, formData: FormData) {
     return { success: "Problem created successfully" }
   } catch (error) {
     console.error("Create problem error:", error)
-    return { error: "Failed to create problem" }
+    return { error: "Failed to create problem. Please try again." }
   }
 }
 
@@ -212,11 +214,9 @@ export async function saveW5H2Plan(prevState: any, formData: FormData) {
   }
 
   try {
-    // Check if plan already exists
     const { data: existingPlan } = await supabase.from("w5h2_plans").select("id").eq("problem_id", problemId).single()
 
     if (existingPlan) {
-      // Update existing plan
       const { error } = await supabase
         .from("w5h2_plans")
         .update({
@@ -235,7 +235,6 @@ export async function saveW5H2Plan(prevState: any, formData: FormData) {
         return { error: error.message }
       }
     } else {
-      // Create new plan
       const { error } = await supabase.from("w5h2_plans").insert({
         problem_id: problemId,
         what,
@@ -315,6 +314,7 @@ export async function updateProblem(
     type?: string
     severity?: string
     location?: string
+    recommendations?: string
   },
 ) {
   const cookieStore = cookies()
@@ -338,6 +338,7 @@ export async function updateProblem(
       .eq("user_id", user.id)
 
     if (error) {
+      console.error("Update problem error:", error)
       return { error: error.message }
     }
 
@@ -345,7 +346,7 @@ export async function updateProblem(
     return { success: "Problem updated successfully" }
   } catch (error) {
     console.error("Update problem error:", error)
-    return { error: "Failed to update problem" }
+    return { error: "Failed to update problem. Please try again." }
   }
 }
 
@@ -361,23 +362,18 @@ export async function deleteProblem(problemId: string) {
   }
 
   try {
-    // Delete related photos first
     const { error: photoError } = await supabase.from("problem_photos").delete().eq("problem_id", problemId)
 
     if (photoError) {
       console.error("Delete photos error:", photoError)
-      // Continue with problem deletion even if photos fail
     }
 
-    // Delete related W5H2 plans
     const { error: planError } = await supabase.from("w5h2_plans").delete().eq("problem_id", problemId)
 
     if (planError) {
       console.error("Delete plans error:", planError)
-      // Continue with problem deletion even if plans fail
     }
 
-    // Delete the problem
     const { error } = await supabase.from("problems").delete().eq("id", problemId).eq("user_id", user.id)
 
     if (error) {

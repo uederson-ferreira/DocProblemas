@@ -48,6 +48,7 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
   const [editData, setEditData] = useState({
     title: problem.title || "",
     description: problem.description,
+    recommendations: (problem as any).recommendations || "",
     type: problem.type,
     severity: problem.severity,
     location: problem.location || "",
@@ -256,6 +257,17 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
                   rows={3}
                 />
               </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor={`edit-recommendations-${problem.id}`}>Recomendações</Label>
+                <Textarea
+                  id={`edit-recommendations-${problem.id}`}
+                  value={editData.recommendations}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, recommendations: e.target.value }))}
+                  placeholder="Suas recomendações para solução..."
+                  rows={3}
+                />
+              </div>
             </div>
 
             <div className="flex gap-2">
@@ -268,27 +280,43 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
             </div>
           </div>
         ) : (
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Seção da descrição - lado esquerdo */}
-            <div className="flex-1">
-              <h4 className="font-semibold text-slate-900 mb-2">Descrição do Problema</h4>
-              <p className="text-slate-700 bg-slate-50 p-3 rounded-lg whitespace-pre-wrap break-words overflow-wrap-anywhere">
-                {problem.description}
-              </p>
-            </div>
-
-            {/* Seção das fotos - lado direito */}
-            {((problem.photos && problem.photos.length > 0) ||
-              ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
-              <div className="lg:w-80 flex-shrink-0">
-                <h4 className="font-semibold text-slate-900 mb-2">Fotos do Problema</h4>
-                <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
-                {/* Debug visual */}
-                <div className="text-xs text-gray-500 mt-1">
-                  Debug: {problem.photos?.length || (problem as any).problem_photos?.length || 0} fotos encontradas
+          <div className="space-y-4">
+            {/* Layout principal: Descrição + Recomendações à esquerda, Fotos à direita */}
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Coluna esquerda: Descrição + Recomendações */}
+              <div className="flex-1 min-w-0 space-y-4">
+                {/* Descrição do Problema */}
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-2">Descrição do Problema</h4>
+                  <p className="text-slate-700 bg-slate-50 p-3 rounded-lg whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                    {problem.description}
+                  </p>
                 </div>
+
+                {/* Recomendações */}
+                {(problem as any).recommendations && (
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-slate-900 mb-2">💡 Recomendações</h4>
+                    <p className="text-slate-700 bg-blue-50 p-3 rounded-lg whitespace-pre-wrap break-words overflow-wrap-anywhere border-l-4 border-l-blue-500 max-w-full overflow-hidden">
+                      {(problem as any).recommendations}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Coluna direita: Fotos */}
+              {((problem.photos && problem.photos.length > 0) ||
+                ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
+                <div className="lg:w-80 lg:flex-shrink-0">
+                  <h4 className="font-semibold text-slate-900 mb-2">Fotos do Problema</h4>
+                  <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
+                  {/* Debug visual */}
+                  <div className="text-xs text-gray-500 mt-1">
+                    Debug: {problem.photos?.length || (problem as any).problem_photos?.length || 0} fotos encontradas
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
