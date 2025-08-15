@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Loader2, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { signUp } from "@/lib/actions"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -30,8 +32,18 @@ function SubmitButton() {
 }
 
 export default function SignUpForm() {
-  // Initialize with null as the initial state
+  const router = useRouter()
   const [state, formAction] = useActionState(signUp, null)
+
+  useEffect(() => {
+    if (state?.success) {
+      const timer = setTimeout(() => {
+        router.push("/auth/login")
+      }, 2000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [state?.success, router])
 
   return (
     <div className="w-full max-w-md space-y-8">
@@ -49,7 +61,9 @@ export default function SignUpForm() {
         )}
 
         {state?.success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">{state.success}</div>
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+            {state.success} Redirecionando para o login...
+          </div>
         )}
 
         <div className="space-y-4">
