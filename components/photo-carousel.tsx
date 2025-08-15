@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import Image from "next/image"
 
 interface Photo {
@@ -21,7 +22,7 @@ export function PhotoCarousel({ photos, className = "" }: PhotoCarouselProps) {
 
   if (!photos || photos.length === 0) {
     return (
-      <div className={`bg-gray-100 rounded-lg flex items-center justify-center h-48 ${className}`}>
+      <div className={`bg-gray-100 rounded-lg flex items-center justify-center h-64 ${className}`}>
         <p className="text-gray-500">Nenhuma foto disponível</p>
       </div>
     )
@@ -30,13 +31,35 @@ export function PhotoCarousel({ photos, className = "" }: PhotoCarouselProps) {
   if (photos.length === 1) {
     return (
       <div className={`relative rounded-lg overflow-hidden ${className}`}>
-        <Image
-          src={photos[0].photo_url || "/placeholder.svg"}
-          alt={photos[0].filename}
-          width={400}
-          height={300}
-          className="w-full h-48 object-contain bg-gray-50"
-        />
+        <Dialog>
+          <DialogTrigger asChild>
+            <div className="relative cursor-pointer group">
+              <Image
+                src={photos[0].photo_url || "/placeholder.svg"}
+                alt={photos[0].filename}
+                width={500}
+                height={400}
+                className="w-full h-64 object-contain bg-gray-50 hover:scale-105 transition-transform"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute top-2 right-2 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] p-2">
+            <Image
+              src={photos[0].photo_url || "/placeholder.svg"}
+              alt={photos[0].filename}
+              width={800}
+              height={600}
+              className="w-full h-auto object-contain"
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
@@ -51,13 +74,57 @@ export function PhotoCarousel({ photos, className = "" }: PhotoCarouselProps) {
 
   return (
     <div className={`relative rounded-lg overflow-hidden ${className}`}>
-      <Image
-        src={photos[currentIndex].photo_url || "/placeholder.svg"}
-        alt={photos[currentIndex].filename}
-        width={400}
-        height={300}
-        className="w-full h-48 object-contain bg-gray-50"
-      />
+      <Dialog>
+        <DialogTrigger asChild>
+          <div className="relative cursor-pointer group">
+            <Image
+              src={photos[currentIndex].photo_url || "/placeholder.svg"}
+              alt={photos[currentIndex].filename}
+              width={500}
+              height={400}
+              className="w-full h-64 object-contain bg-gray-50 hover:scale-105 transition-transform"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute top-2 left-2 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-2">
+          <div className="relative">
+            <Image
+              src={photos[currentIndex].photo_url || "/placeholder.svg"}
+              alt={photos[currentIndex].filename}
+              width={800}
+              height={600}
+              className="w-full h-auto object-contain"
+            />
+            {photos.length > 1 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                  onClick={prevPhoto}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                  onClick={nextPhoto}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Navigation buttons */}
       <Button
