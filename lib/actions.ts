@@ -17,6 +17,17 @@ export async function signIn(prevState: any, formData: FormData) {
     return { error: "Email and password are required" }
   }
 
+  // Development mode: simulate successful login without Supabase
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    // Simulate login validation
+    if (email.toString() === "admin@teste.com" && password.toString() === "123456") {
+      return { success: true }
+    } else {
+      return { error: "Credenciais inválidas. Use: admin@teste.com / 123456" }
+    }
+  }
+
+  // Production mode: use Supabase
   const cookieStore = cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
@@ -59,7 +70,7 @@ export async function signUp(prevState: any, formData: FormData) {
       options: {
         emailRedirectTo:
           process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-          `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}`,
+          `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3003"}`,
       },
     })
 

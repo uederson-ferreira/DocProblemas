@@ -9,15 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@vercel/blob'],
-  },
-  // Aumentando limite de body size para uploads
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
+  serverExternalPackages: ['@vercel/blob'],
 }
 
 export default nextConfig
