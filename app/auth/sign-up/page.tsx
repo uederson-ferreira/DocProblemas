@@ -2,6 +2,9 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import SignUpForm from "@/components/sign-up-form"
 
+// Force dynamic rendering to avoid build-time static generation
+export const dynamic = 'force-dynamic'
+
 export default async function SignUpPage() {
   // If Supabase is not configured, show setup message directly
   if (!isSupabaseConfigured) {
