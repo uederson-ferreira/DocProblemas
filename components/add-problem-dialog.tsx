@@ -43,6 +43,11 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
 
   useEffect(() => {
     if (state?.success) {
+      // Call onAdd to update the problems list
+      if (onAdd && state.problem) {
+        onAdd(state.problem)
+      }
+      
       setFormData({
         title: "",
         location: "",
@@ -56,7 +61,7 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
       setPhotos([])
       onOpenChange(false)
     }
-  }, [state?.success, onOpenChange])
+  }, [state?.success, onOpenChange, onAdd, state?.problem])
 
   const enhancedFormAction = (formDataObj: FormData) => {
     // Add photos to form data

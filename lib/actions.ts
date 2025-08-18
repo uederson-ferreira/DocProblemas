@@ -173,7 +173,33 @@ export async function createProblem(prevState: any, formData: FormData) {
     }
 
     revalidatePath("/")
-    return { success: "Problem created successfully" }
+    return { 
+      success: "Problem created successfully",
+      problem: {
+        id: problemData.id,
+        title,
+        description,
+        type: typeString,
+        severity,
+        location,
+        status: "pendente" as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        user_id: user.id,
+        problem_number: 0, // Será preenchido pelo banco
+        recommendations: recommendations || null,
+        latitude_gms: latitude_gms || null,
+        longitude_gms: longitude_gms || null,
+        latitude_decimal: null,
+        longitude_decimal: null,
+        problem_photos: photoCount > 0 ? Array.from({ length: photoCount }, (_, i) => ({
+          id: `temp-${i}`,
+          filename: formData.get(`filename_${i}`)?.toString() || "",
+          photo_url: formData.get(`photo_${i}`)?.toString() || "",
+        })) : [],
+        w5h2_plans: []
+      }
+    }
   } catch (error) {
     console.error("Create problem error:", error)
     return { error: "Failed to create problem. Please try again." }
