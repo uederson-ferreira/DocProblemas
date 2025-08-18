@@ -7,11 +7,15 @@ interface Problem {
   title: string
   description: string
   recommendations?: string
-  type: string
+  type: string // Agora suporta múltiplos tipos separados por vírgula
   severity: string
   location: string
-  resolved: boolean
+  status: "pendente" | "resolvido" // Mudando de resolved para status
   created_at: string
+  latitude_gms?: string // Coordenada GMS: "02 30 50 S"
+  longitude_gms?: string // Coordenada GMS: "47 44 39 W"
+  latitude_decimal?: number // Coordenada decimal: -2.513889
+  longitude_decimal?: number // Coordenada decimal: -47.744167
   problem_photos?: Array<{
     id: string
     photo_url: string
@@ -68,7 +72,7 @@ export async function POST(request: NextRequest) {
     // Statistics slide
     const statsSlide = pptx.addSlide()
     const totalProblems = problems.length
-    const resolvedProblems = problems.filter((p) => p.resolved).length
+    const resolvedProblems = problems.filter((p) => p.status === "resolvido").length
     const pendingProblems = totalProblems - resolvedProblems
 
     statsSlide.addText("Estatísticas Gerais", {
@@ -101,14 +105,15 @@ export async function POST(request: NextRequest) {
       const slide = pptx.addSlide()
 
       // Problem title
-      slide.addText(`PROBLEMA #${String(problem.problem_number).padStart(3, "0")}`, {
+      const problemTitle = problem.title || `PROBLEMA #${String(problem.problem_number).padStart(3, "0")}`
+      slide.addText(problemTitle, {
         x: 0.5,
         y: 0.2,
         w: 9,
         h: 0.8,
         fontSize: 20,
         bold: true,
-        color: problem.resolved ? "16A34A" : "DC2626",
+        color: problem.status === "resolvido" ? "16A34A" : "DC2626",
       })
 
       // Left column for text content
@@ -118,7 +123,21 @@ export async function POST(request: NextRequest) {
 
       // Problem details in left column
       let yPos = 1.0
-      slide.addText([{ text: "Tipo: ", options: { bold: true } }, { text: problem.type }], {
+      
+      // Função para renderizar tipos múltiplos
+      const renderTypes = (typeString: string) => {
+        if (!typeString) return "Não especificado"
+        const types = typeString.split(',').map(t => t.trim())
+        const typeLabels: { [key: string]: string } = {
+          meio_ambiente: "Meio Ambiente",
+          saude: "Saúde",
+          seguranca: "Segurança",
+          outros: "Outros",
+        }
+        return types.map(t => typeLabels[t] || t).join(', ')
+      }
+      
+      slide.addText([{ text: "Tipo: ", options: { bold: true } }, { text: renderTypes(problem.type) }], {
         x: 0.5,
         y: yPos,
         w: leftColumnWidth,
@@ -146,9 +165,35 @@ export async function POST(request: NextRequest) {
 
       yPos += 0.35
       slide.addText(
-        [{ text: "Status: ", options: { bold: true } }, { text: problem.resolved ? "Resolvido" : "Não Resolvido" }],
-        { x: 0.5, y: yPos, w: leftColumnWidth, h: 0.3, fontSize: 12, color: problem.resolved ? "16A34A" : "DC2626" },
+        [{ text: "Status: ", options: { bold: true } }, { text: problem.status === "pendente" ? "Não Resolvido" : "Resolvido" }],
+        { x: 0.5, y: yPos, w: leftColumnWidth, h: 0.3, fontSize: 12, color: problem.status === "resolvido" ? "16A34A" : "DC2626" },
       )
+
+      // Adicionar coordenadas se disponíveis
+      if (problem.latitude_gms && problem.longitude_gms) {
+        yPos += 0.35
+        slide.addText([{ text: "Coordenadas: ", options: { bold: true } }, { text: `${problem.latitude_gms}, ${problem.longitude_gms}` }], {
+          x: 0.5,
+          y: yPos,
+          w: leftColumnWidth,
+          h: 0.3,
+          fontSize: 11,
+          color: "22C55E",
+        })
+        
+        // Adicionar coordenadas decimais se disponíveis
+        if (problem.latitude_decimal && problem.longitude_decimal) {
+          yPos += 0.25
+          slide.addText([{ text: "Decimal: ", options: { bold: true } }, { text: `${problem.latitude_decimal.toFixed(6)}°, ${problem.longitude_decimal.toFixed(6)}°` }], {
+            x: 0.5,
+            y: yPos,
+            w: leftColumnWidth,
+            h: 0.25,
+            fontSize: 10,
+            color: "666666",
+          })
+        }
+      }
 
       yPos += 0.55
       slide.addText("Descrição:", { x: 0.5, y: yPos, w: leftColumnWidth, h: 0.3, fontSize: 14, bold: true })

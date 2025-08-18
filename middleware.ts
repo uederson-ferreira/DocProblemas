@@ -18,41 +18,49 @@ export async function middleware(request: NextRequest) {
 
   const res = NextResponse.next()
 
-  // Create a Supabase client configured to use cookies
-  const supabase = createMiddlewareClient({ req: request, res })
+  try {
+    // Create a Supabase client configured to use cookies
+    const supabase = createMiddlewareClient({ req: request, res })
 
-  // Check if this is an auth callback
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get("code")
+    // Check if this is an auth callback
+    const requestUrl = new URL(request.url)
+    const code = requestUrl.searchParams.get("code")
 
-  if (code) {
-    // Exchange the code for a session
-    await supabase.auth.exchangeCodeForSession(code)
-    // Redirect to home page after successful auth
-    return NextResponse.redirect(new URL("/", request.url))
-  }
-
-  // Refresh session if expired - required for Server Components
-  await supabase.auth.getSession()
-
-  // Protected routes - redirect to login if not authenticated
-  const isAuthRoute =
-    request.nextUrl.pathname.startsWith("/auth/login") ||
-    request.nextUrl.pathname.startsWith("/auth/sign-up") ||
-    request.nextUrl.pathname === "/auth/callback"
-
-  if (!isAuthRoute) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
-      const redirectUrl = new URL("/auth/login", request.url)
-      return NextResponse.redirect(redirectUrl)
+    if (code) {
+      // Exchange the code for a session
+      await supabase.auth.exchangeCodeForSession(code)
+      // Redirect to home page after successful auth
+      return NextResponse.redirect(new URL("/", request.url))
     }
-  }
 
-  return res
+    // Refresh session if expired - required for Server Components
+    await supabase.auth.getSession()
+
+    // Protected routes - redirect to login if not authenticated
+    const isAuthRoute =
+      request.nextUrl.pathname.startsWith("/auth/login") ||
+      request.nextUrl.pathname.startsWith("/auth/sign-up") ||
+      request.nextUrl.pathname === "/auth/callback"
+
+    if (!isAuthRoute) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session) {
+        const redirectUrl = new URL("/auth/login", request.url)
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
+
+    return res
+  } catch (error) {
+    console.error("Middleware error:", error)
+    // If there's an error, just continue without auth
+    return NextResponse.next({
+      request,
+    })
+  }
 }
 
 export const config = {

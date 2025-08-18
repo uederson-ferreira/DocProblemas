@@ -10,11 +10,24 @@ export const isSupabaseConfigured =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length > 0
 
 // Create a cached version of the Supabase client for Server Components
-export const createClient = cache(() => {
-  const cookieStore = cookies()
+export const createClient = cache(async () => {
+  try {
+    const cookieStore = await cookies()
 
-  if (!isSupabaseConfigured) {
-    console.warn("Supabase environment variables are not set. Using dummy client.")
+    if (!isSupabaseConfigured) {
+      console.warn("Supabase environment variables are not set. Using dummy client.")
+      return {
+        auth: {
+          getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+          getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+        },
+      }
+    }
+
+    return createServerComponentClient({ cookies: () => cookieStore })
+  } catch (error) {
+    console.error("Error creating Supabase client:", error)
+    // Return dummy client if there's an error
     return {
       auth: {
         getUser: () => Promise.resolve({ data: { user: null }, error: null }),
@@ -22,6 +35,4 @@ export const createClient = cache(() => {
       },
     }
   }
-
-  return createServerComponentClient({ cookies: () => cookieStore })
 })

@@ -125,11 +125,17 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
   }
 
   const typeLabels = {
+    meio_ambiente: "Meio Ambiente",
+    saude: "Saúde",
     seguranca: "Segurança",
-    ambiental: "Ambiental",
-    infraestrutura: "Infraestrutura",
-    qualidade: "Qualidade",
     outros: "Outros",
+  }
+
+  // Função para renderizar tipos múltiplos
+  const renderTypes = (typeString: string) => {
+    if (!typeString) return "Não especificado"
+    const types = typeString.split(',').map(t => t.trim())
+    return types.map(t => typeLabels[t as keyof typeof typeLabels] || t).join(', ')
   }
 
   return `
@@ -171,6 +177,14 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
         .problem-title { font-weight: bold; font-size: 14px; }
         .severity-badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; }
         .problem-meta { display: flex; gap: 20px; margin: 10px 0; font-size: 11px; color: #666; flex-wrap: wrap; }
+        .coordinates-section { 
+          margin: 10px 0; 
+          padding: 8px; 
+          background: #f0fdf4; 
+          border-left: 4px solid #22c55e; 
+          border-radius: 4px; 
+          font-size: 11px;
+        }
         
         /* Layout similar à interface - descrição e recomendações à esquerda, fotos à direita */
         .problem-content { 
@@ -292,18 +306,30 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
                 (problem) => `
           <div class="problem">
             <div class="problem-header">
-              <div class="problem-title">Problema #${String(problem.problem_number || 1).padStart(3, "0")}</div>
+              <div class="problem-title">${problem.title || `Problema #${String(problem.problem_number || 1).padStart(3, "0")}`}</div>
               <div class="severity-badge" style="background-color: ${severityColors[problem.severity as keyof typeof severityColors]}">
                 ${severityLabels[problem.severity as keyof typeof severityLabels]}
               </div>
             </div>
             
             <div class="problem-meta">
-              <div><strong>Tipo:</strong> ${typeLabels[problem.type as keyof typeof typeLabels]}</div>
+              <div><strong>Tipo:</strong> ${renderTypes(problem.type)}</div>
               <div><strong>Status:</strong> ${problem.status === "pendente" ? "Não Resolvido" : "Resolvido"}</div>
               <div><strong>Data:</strong> ${new Date(problem.created_at).toLocaleDateString("pt-BR")}</div>
               ${problem.location ? `<div><strong>Local:</strong> ${problem.location}</div>` : ""}
             </div>
+            
+            ${(problem as any).latitude_gms && (problem as any).longitude_gms ? `
+            <div class="coordinates-section">
+              <strong>🗺️ Coordenadas Geográficas (SIRGAS 2000):</strong><br>
+              <strong>Latitude:</strong> ${(problem as any).latitude_gms} | 
+              <strong>Longitude:</strong> ${(problem as any).longitude_gms}
+              ${(problem as any).latitude_decimal && (problem as any).longitude_decimal ? 
+                `<br><em>Decimal: ${(problem as any).latitude_decimal.toFixed(6)}°, ${(problem as any).longitude_decimal.toFixed(6)}°</em>` : 
+                ''
+              }
+            </div>
+            ` : ''}
             
             <div class="problem-content">
               <div class="problem-left">

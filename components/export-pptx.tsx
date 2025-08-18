@@ -10,11 +10,15 @@ interface Problem {
   title: string
   description: string
   recommendations?: string
-  type: string
+  type: string // Agora suporta múltiplos tipos separados por vírgula
   severity: string
   location: string
-  resolved: boolean
+  status: "pendente" | "resolvido" // Mudando de resolved para status
   created_at: string
+  latitude_gms?: string // Coordenada GMS: "02 30 50 S"
+  longitude_gms?: string // Coordenada GMS: "47 44 39 W"
+  latitude_decimal?: number // Coordenada decimal: -2.513889
+  longitude_decimal?: number // Coordenada decimal: -47.744167
   problem_photos?: Array<{
     id: string
     photo_url: string

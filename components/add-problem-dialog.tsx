@@ -111,7 +111,7 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
             </div>
 
             <div>
-              <Label htmlFor="latitude_gms" className="text-sm font-medium mb-2 block">Latitude SIRGAS 2000 *</Label>
+              <Label htmlFor="latitude_gms" className="text-sm font-medium mb-2 block">Latitude SIRGAS 2000</Label>
               <Input
                 id="latitude_gms"
                 name="latitude_gms"
@@ -120,13 +120,12 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
                 onChange={(e) => setFormData((prev) => ({ ...prev, latitude_gms: e.target.value }))}
                 placeholder="Ex: 02 30 50 S"
                 className="text-lg font-mono"
-                required
               />
               <p className="text-xs text-gray-500 mt-1">Formato: Graus Minutos Segundos Direção (ex: 02 30 50 S)</p>
             </div>
 
             <div>
-              <Label htmlFor="longitude_gms" className="text-sm font-medium mb-2 block">Longitude SIRGAS 2000 *</Label>
+              <Label htmlFor="longitude_gms" className="text-sm font-medium mb-2 block">Longitude SIRGAS 2000</Label>
               <Input
                 id="longitude_gms"
                 name="longitude_gms"
@@ -135,7 +134,6 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
                 onChange={(e) => setFormData((prev) => ({ ...prev, longitude_gms: e.target.value }))}
                 placeholder="Ex: 47 44 39 W"
                 className="text-lg font-mono"
-                required
               />
               <p className="text-xs text-center block text-gray-500 mt-1">Formato: Graus Minutos Segundos Direção (ex: 47 44 39 W)</p>
             </div>

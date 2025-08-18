@@ -31,18 +31,56 @@ export default async function HomePage() {
     )
   }
 
-  // Check if user is logged in
-  const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    // Check if user is logged in
+    const supabase = await createClient()
+    
+    // Verificar se o cliente foi criado corretamente
+    if (!supabase || !supabase.auth) {
+      console.error("Supabase client not properly initialized")
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+          <div className="w-full max-w-md space-y-8">
+            <div>
+              <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+                Erro de Configuração
+              </h2>
+              <p className="mt-2 text-center text-sm text-gray-600">
+                Problema na configuração do Supabase. Tente novamente.
+              </p>
+            </div>
+          </div>
+        </div>
+      )
+    }
 
-  // If no user, redirect to login
-  if (!user) {
-    redirect("/auth/login")
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    // If no user, redirect to login
+    if (!user) {
+      redirect("/auth/login")
+    }
+
+    const problems = await getProblems()
+
+    return <ProblemsApp initialProblems={problems} user={user} />
+  } catch (error) {
+    console.error("Error in HomePage:", error)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+              Erro de Sistema
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Ocorreu um erro inesperado. Tente novamente.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
-
-  const problems = await getProblems()
-
-  return <ProblemsApp initialProblems={problems} user={user} />
 }
