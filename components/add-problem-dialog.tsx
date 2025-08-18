@@ -66,6 +66,11 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
     })
     formDataObj.append("photo_count", photos.length.toString())
 
+    // Add type to form data (CRÍTICO: estava faltando!)
+    formData.type.forEach((typeValue) => {
+      formDataObj.append("type", typeValue)
+    })
+
     // Add latitude and longitude to form data
     formDataObj.append("latitude_gms", formData.latitude_gms)
     formDataObj.append("longitude_gms", formData.longitude_gms)
