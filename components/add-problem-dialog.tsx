@@ -112,11 +112,10 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="meio_ambiente">Meio Ambiente</SelectItem>
+                  <SelectItem value="saude">Saúde</SelectItem>
                   <SelectItem value="seguranca">Segurança</SelectItem>
-                  <SelectItem value="desmatamento">Desmatamento</SelectItem>
-                  <SelectItem value="poluicao">Poluição</SelectItem>
-                  <SelectItem value="infraestrutura">Infraestrutura</SelectItem>
-                  <SelectItem value="licenciamento">Licenciamento</SelectItem>
+                  <SelectItem value="outros">Outros</SelectItem>
                 </SelectContent>
               </Select>
             </div>

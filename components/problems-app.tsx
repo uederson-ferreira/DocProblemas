@@ -10,6 +10,7 @@ import { Plus, Download, AlertTriangle, LogOut } from "lucide-react"
 import type { Problem, W5H2Plan } from "@/lib/supabase/client"
 import { signOut } from "@/lib/actions"
 import { PrintReport } from "@/components/print-report"
+import { ExportPPTX } from "@/components/export-pptx"
 
 interface ProblemsAppProps {
   initialProblems: (Problem & { w5h2_plans: W5H2Plan[] })[]
@@ -112,6 +113,8 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
 
             {/* Botão de impressão */}
             <PrintReport problems={problems || []} />
+
+            <ExportPPTX problems={problems || []} />
           </div>
 
           <div className="flex-1">
