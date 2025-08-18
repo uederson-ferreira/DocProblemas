@@ -1,27 +1,274 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# debug
+# ===== DEPENDÊNCIAS =====
+# Dependencies
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# env files
-.env*
+# Package managers
+.pnpm-store/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
-# vercel
-.vercel
+# ===== NEXT.JS =====
+# Next.js build output
+.next/
+out/
+dist/
+build/
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Next.js cache
+.next/cache/
+.vercel/
+
+# ===== AMBIENTE E CONFIGURAÇÃO =====
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Configuration files that might contain secrets
+*.config.local.js
+*.config.local.ts
+*.config.local.mjs
+
+# ===== SISTEMA OPERACIONAL =====
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===== EDITORES E IDEs =====
+# Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ===== LOGS E TEMPORÁRIOS =====
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# ===== TESTES =====
+# Jest
+coverage/
+.nyc_output
+.jest/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ===== BUILD E DEPLOY =====
+# Build outputs
+build/
+dist/
+out/
+.next/
+.vercel/
+
+# Storybook
+storybook-static/
+
+# ===== BANCO DE DADOS =====
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# PostgreSQL
+*.sql
+*.dump
+
+# ===== ARQUIVOS DE MÍDIA =====
+# Images (se não quiser versionar)
+# *.jpg
+# *.jpeg
+# *.png
+# *.gif
+# *.svg
+# *.webp
+
+# Videos
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm
+
+# Audio
+*.mp3
+*.wav
+*.flac
+*.aac
+*.ogg
+
+# Documents
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+
+# ===== ARQUIVOS DE SISTEMA =====
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# ===== SEGURANÇA =====
+# Secrets and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+id_rsa
+id_rsa.pub
+*.env
+
+# ===== PROJETOS ESPECÍFICOS =====
+# Supabase
+.supabase/
+
+# Vercel
+.vercel/
+
+# Netlify
+.netlify/
+
+# ===== OUTROS =====
+# Misc
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Local development
+.local/
+local/
+
+# ===== EXCEÇÕES =====
+# Keep these files
+!.gitignore
+!README.md
+!LICENSE
+!package.json
+!package-lock.json
+!pnpm-lock.yaml
+!yarn.lock
+!tsconfig.json
+!next.config.mjs
+!tailwind.config.js
+!postcss.config.js
+!components.json
