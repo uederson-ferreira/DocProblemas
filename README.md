@@ -22,7 +22,6 @@
 - [📱 Responsividade](#-responsividade)
 - [🎨 Interface](#-interface)
 - [📈 Estatísticas](#-estatísticas)
-- [🔄 Fluxo de Trabalho](#️-fluxo-de-trabalho)
 - [🚀 Deploy](#-deploy)
 - [🛠️ Desenvolvimento](#️-desenvolvimento)
 - [🤝 Contribuição](#-contribuição)
