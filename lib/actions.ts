@@ -107,7 +107,7 @@ export async function createProblem(prevState: any, formData: FormData) {
   try {
     const title = formData.get("title")?.toString()
     const description = formData.get("description")?.toString()
-    const type = formData.get("type")?.toString()
+    const type = formData.getAll("type") // Mudança: getAll em vez de get
     const severity = formData.get("severity")?.toString()
     const location = formData.get("location")?.toString()
     const recommendations = formData.get("recommendations")?.toString()
