@@ -15,13 +15,19 @@ export interface Problem {
   id: string
   title: string
   description: string
-  type: "desmatamento" | "seguranca" | "poluicao" | "infraestrutura" | "licenciamento"
+  type: string // Agora suporta múltiplos tipos separados por vírgula
   severity: "critico" | "alto" | "medio" | "baixo"
   location?: string
   status: "pendente" | "resolvido"
   created_at: string
   updated_at: string
   user_id: string
+  problem_number?: number
+  recommendations?: string
+  latitude_gms?: string // Coordenada GMS: "02 30 50 S"
+  longitude_gms?: string // Coordenada GMS: "47 44 39 W"
+  latitude_decimal?: number // Coordenada decimal: -2.513889
+  longitude_decimal?: number // Coordenada decimal: -47.744167
 }
 
 export interface W5H2Plan {

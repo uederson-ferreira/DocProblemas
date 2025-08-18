@@ -22,7 +22,7 @@ export function PhotoCarousel({ photos, className = "" }: PhotoCarouselProps) {
 
   if (!photos || photos.length === 0) {
     return (
-      <div className={`bg-gray-100 rounded-lg flex items-center justify-center h-64 ${className}`}>
+      <div className={`bg-gray-100 rounded-lg flex items-center justify-center h-80 ${className}`}>
         <p className="text-gray-500">Nenhuma foto disponível</p>
       </div>
     )
@@ -39,7 +39,7 @@ export function PhotoCarousel({ photos, className = "" }: PhotoCarouselProps) {
                 alt={photos[0].filename}
                 width={500}
                 height={400}
-                className="w-full h-64 object-contain bg-gray-50 hover:scale-105 transition-transform"
+                className="w-full h-80 object-contain bg-gray-50 hover:scale-105 transition-transform"
               />
               <Button
                 variant="outline"
@@ -82,7 +82,7 @@ export function PhotoCarousel({ photos, className = "" }: PhotoCarouselProps) {
               alt={photos[currentIndex].filename}
               width={500}
               height={400}
-              className="w-full h-64 object-contain bg-gray-50 hover:scale-105 transition-transform"
+              className="w-full h-80 object-contain bg-gray-50 hover:scale-105 transition-transform"
             />
             <Button
               variant="outline"

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createProblem } from "@/lib/actions"
 import { useActionState } from "react"
@@ -28,10 +29,12 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
   const [formData, setFormData] = useState({
     title: "",
     location: "",
-    type: "" as Problem["type"],
+    type: [] as string[],
     severity: "medio" as Problem["severity"],
     description: "",
     recommendations: "",
+    latitude_gms: "",
+    longitude_gms: "",
   })
 
   const [photos, setPhotos] = useState<UploadedPhoto[]>([])
@@ -43,10 +46,12 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
       setFormData({
         title: "",
         location: "",
-        type: "" as Problem["type"],
+        type: [] as string[],
         severity: "medio",
         description: "",
         recommendations: "",
+        latitude_gms: "",
+        longitude_gms: "",
       })
       setPhotos([])
       onOpenChange(false)
@@ -60,6 +65,10 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
       formDataObj.append(`filename_${index}`, photo.filename)
     })
     formDataObj.append("photo_count", photos.length.toString())
+
+    // Add latitude and longitude to form data
+    formDataObj.append("latitude_gms", formData.latitude_gms)
+    formDataObj.append("longitude_gms", formData.longitude_gms)
 
     // Call the original form action
     formAction(formDataObj)
@@ -102,22 +111,79 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
             </div>
 
             <div>
-              <Label htmlFor="type">Tipo do Problema *</Label>
-              <Select
-                name="type"
-                value={formData.type}
-                onValueChange={(value: Problem["type"]) => setFormData((prev) => ({ ...prev, type: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="meio_ambiente">Meio Ambiente</SelectItem>
-                  <SelectItem value="saude">Saúde</SelectItem>
-                  <SelectItem value="seguranca">Segurança</SelectItem>
-                  <SelectItem value="outros">Outros</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="latitude_gms" className="text-sm font-medium mb-2 block">Latitude SIRGAS 2000 *</Label>
+              <Input
+                id="latitude_gms"
+                name="latitude_gms"
+                type="text"
+                value={formData.latitude_gms}
+                onChange={(e) => setFormData((prev) => ({ ...prev, latitude_gms: e.target.value }))}
+                placeholder="Ex: 02 30 50 S"
+                className="text-lg font-mono"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Formato: Graus Minutos Segundos Direção (ex: 02 30 50 S)</p>
+            </div>
+
+            <div>
+              <Label htmlFor="longitude_gms" className="text-sm font-medium mb-2 block">Longitude SIRGAS 2000 *</Label>
+              <Input
+                id="longitude_gms"
+                name="longitude_gms"
+                type="text"
+                value={formData.longitude_gms}
+                onChange={(e) => setFormData((prev) => ({ ...prev, longitude_gms: e.target.value }))}
+                placeholder="Ex: 47 44 39 W"
+                className="text-lg font-mono"
+                required
+              />
+              <p className="text-xs text-center block text-gray-500 mt-1">Formato: Graus Minutos Segundos Direção (ex: 47 44 39 W)</p>
+            </div>
+
+            <div>
+              <Label htmlFor="type" className="text-sm font-medium mb-2 block">
+                Tipos do Problema (selecione um ou mais) *
+              </Label>
+              <div className="space-y-2">
+                {[
+                  { key: "meio_ambiente", label: "Meio Ambiente", color: "bg-green-500" },
+                  { key: "saude", label: "Saúde", color: "bg-blue-500" },
+                  { key: "seguranca", label: "Segurança", color: "bg-red-500" },
+                  { key: "outros", label: "Outros", color: "bg-gray-500" }
+                ].map((typeOption) => (
+                  <div key={typeOption.key} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`type-${typeOption.key}`}
+                      checked={formData.type.includes(typeOption.key)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            type: [...prev.type, typeOption.key]
+                          }))
+                        } else {
+                          setFormData((prev) => ({
+                            ...prev,
+                            type: prev.type.filter(t => t !== typeOption.key)
+                          }))
+                        }
+                      }}
+                    />
+                    <Label 
+                      htmlFor={`type-${typeOption.key}`}
+                      className="text-sm cursor-pointer flex items-center gap-2"
+                    >
+                      <span className={`inline-block w-3 h-3 rounded-full ${typeOption.color}`}></span>
+                      {typeOption.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              {formData.type.length === 0 && (
+                <p className="text-sm text-red-600 mt-1">
+                  Selecione pelo menos um tipo
+                </p>
+              )}
             </div>
 
             <div>
@@ -179,4 +245,4 @@ export function AddProblemDialog({ open, onOpenChange, onAdd }: AddProblemDialog
       </DialogContent>
     </Dialog>
   )
-}
+} 

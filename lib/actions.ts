@@ -101,30 +101,40 @@ export async function createProblem(prevState: any, formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return { error: "You must be logged in to create problems" }
-  }
-
-  const title = formData.get("title")?.toString()
-  const description = formData.get("description")?.toString()
-  const type = formData.get("type")?.toString()
-  const severity = formData.get("severity")?.toString()
-  const location = formData.get("location")?.toString()
-  const recommendations = formData.get("recommendations")?.toString()
-
-  if (!title || !description || !type || !severity) {
-    return { error: "All required fields must be filled" }
+    return { error: "User not authenticated" }
   }
 
   try {
+    const title = formData.get("title")?.toString()
+    const description = formData.get("description")?.toString()
+    const type = formData.get("type")?.toString()
+    const severity = formData.get("severity")?.toString()
+    const location = formData.get("location")?.toString()
+    const recommendations = formData.get("recommendations")?.toString()
+    const latitude_gms = formData.get("latitude_gms")?.toString()
+    const longitude_gms = formData.get("longitude_gms")?.toString()
+
+    if (!title || !description || !type || !severity || !location) {
+      return { error: "Missing required fields" }
+    }
+
+    // Converter array de tipos para string separada por vírgula
+    let typeString = type
+    if (Array.isArray(type)) {
+      typeString = type.join(',')
+    }
+
     const { data: problemData, error: problemError } = await supabase
       .from("problems")
       .insert({
         title,
         description,
-        type,
+        type: typeString,
         severity,
         location,
         recommendations: recommendations || null,
+        latitude_gms: latitude_gms || null,
+        longitude_gms: longitude_gms || null,
         user_id: user.id,
       })
       .select("id")
@@ -440,6 +450,8 @@ export async function updateProblem(
     severity?: string
     location?: string
     recommendations?: string
+    latitude_gms?: string
+    longitude_gms?: string
   },
 ) {
   const cookieStore = cookies()
@@ -449,14 +461,21 @@ export async function updateProblem(
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return { error: "You must be logged in" }
+    return { error: "User not authenticated" }
   }
 
   try {
+    // Converter array de tipos para string separada por vírgula se necessário
+    let typeString = updateData.type
+    if (Array.isArray(updateData.type)) {
+      typeString = updateData.type.join(',')
+    }
+
     const { error } = await supabase
       .from("problems")
       .update({
         ...updateData,
+        type: typeString,
         updated_at: new Date().toISOString(),
       })
       .eq("id", problemId)

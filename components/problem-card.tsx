@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input"
 import { ChevronDown, ChevronUp, AlertTriangle, Edit, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { updateProblemStatus, saveW5H2Plan, updateProblem, deleteProblem, createW5H2Plan } from "@/lib/actions"
-import { useActionState } from "react"
 import { PhotoCarousel } from "./photo-carousel"
 import { W5H2List } from "./w5h2-list"
 
@@ -34,11 +33,26 @@ const severityConfig = {
 }
 
 const typeConfig = {
-  desmatamento: "Desmatamento",
-  seguranca: "Segurança",
-  poluicao: "Poluição",
-  infraestrutura: "Infraestrutura",
-  licenciamento: "Licenciamento",
+  meio_ambiente: { label: "Meio Ambiente", color: "bg-green-500 text-white" },
+  saude: { label: "Saúde", color: "bg-blue-500 text-white" },
+  seguranca: { label: "Segurança", color: "bg-red-500 text-white" },
+  outros: { label: "Outros", color: "bg-gray-500 text-white" },
+}
+
+// Função para renderizar múltiplos tipos
+const renderTypes = (types: string | string[]) => {
+  if (!types) return null
+  
+  const typeArray = Array.isArray(types) ? types : [types]
+  
+  return typeArray.map((type, index) => (
+    <Badge 
+      key={index} 
+      className={typeConfig[type as keyof typeof typeConfig]?.color || "bg-gray-500 text-white"}
+    >
+      {typeConfig[type as keyof typeof typeConfig]?.label || type}
+    </Badge>
+  ))
 }
 
 export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: ProblemCardProps) {
@@ -52,9 +66,11 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
     title: problem.title || "",
     description: problem.description,
     recommendations: (problem as any).recommendations || "",
-    type: problem.type,
+    type: Array.isArray(problem.type) ? problem.type : problem.type.split(',').filter(Boolean),
     severity: problem.severity,
     location: problem.location || "",
+    latitude_gms: (problem as any).latitude_gms || "",
+    longitude_gms: (problem as any).longitude_gms || "",
   })
 
   const [w5h2Data, setW5h2Data] = useState({
@@ -66,11 +82,6 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
     how: "",
     howMuch: "",
   })
-
-  const [statusState, statusAction] = useActionState(updateProblemStatus, null)
-  const [planState, planAction] = useActionState(saveW5H2Plan, null)
-  const [updateState, updateAction] = useActionState(updateProblem, null)
-  const [deleteState, deleteAction] = useActionState(deleteProblem, null)
 
   const handleResolvedChange = async (checked: boolean) => {
     const newStatus = checked ? "resolvido" : "pendente"
@@ -90,23 +101,21 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
   }
 
   const handleW5H2Save = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault() // Previne o comportamento padrão do formulário
-
+    e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const planData = {
-      what: formData.get("what")?.toString() || "",
-      why: formData.get("why")?.toString() || "",
-      when_plan: formData.get("when")?.toString() || "",
-      where_plan: formData.get("where")?.toString() || "",
-      who: formData.get("who")?.toString() || "",
-      how: formData.get("how")?.toString() || "",
-      how_much: formData.get("howMuch")?.toString() || "",
-    }
+    
+    // Converter para FormData como esperado pela função
+    const planFormData = new FormData()
+    planFormData.append("what", formData.get("what")?.toString() || "")
+    planFormData.append("why", formData.get("why")?.toString() || "")
+    planFormData.append("when", formData.get("when")?.toString() || "")
+    planFormData.append("where", formData.get("where")?.toString() || "")
+    planFormData.append("who", formData.get("who")?.toString() || "")
+    planFormData.append("how", formData.get("how")?.toString() || "")
+    planFormData.append("howMuch", formData.get("howMuch")?.toString() || "")
 
-    const result = await createW5H2Plan(problem.id, planData)
-
+    const result = await saveW5H2Plan(problem.id, planFormData)
     if (!result?.error) {
-      // Não fechar o formulário, apenas limpar os campos
       setW5h2Data({
         what: "",
         why: "",
@@ -116,35 +125,36 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
         how: "",
         howMuch: "",
       })
-
-      // Atualizar lista de planos
-      const newPlan: W5H2Plan = {
-        id: crypto.randomUUID(),
-        problem_id: problem.id,
-        ...planData,
-        resolved: false,
-        observations: "",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-
-      onUpdate({
-        ...problem,
-        w5h2_plans: [...(problem.w5h2_plans || []), newPlan],
-      })
+      setShowW5H2(false)
+      // Recarregar problemas para mostrar o novo plano
+      window.location.reload()
     }
   }
 
   const handleEditSave = async () => {
-    const result = await updateProblem(problem.id, editData)
+    const result = await updateProblem(problem.id, {
+      title: editData.title,
+      description: editData.description,
+      recommendations: editData.recommendations,
+      type: Array.isArray(editData.type) ? editData.type.join(',') : editData.type,
+      severity: editData.severity,
+      location: editData.location,
+      latitude_gms: editData.latitude_gms,
+      longitude_gms: editData.longitude_gms,
+    })
 
     if (!result?.error) {
-      setIsEditing(false)
       onUpdate({
         ...problem,
-        ...editData,
+        title: editData.title,
+        description: editData.description,
+        recommendations: editData.recommendations,
+        type: Array.isArray(editData.type) ? editData.type.join(',') : editData.type,
+        severity: editData.severity,
+        location: editData.location,
         updated_at: new Date().toISOString(),
       })
+      setIsEditing(false)
     }
   }
 
@@ -183,14 +193,26 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
               )}
             </div>
 
+            {/* Título do Problema */}
+            <h4 className="text-xl font-semibold text-slate-800 leading-tight">
+              {problem.title}
+            </h4>
+
             <div className="flex flex-wrap gap-2">
               <Badge className={severityConfig[problem.severity].color}>{severityConfig[problem.severity].label}</Badge>
-              <Badge variant="outline">{typeConfig[problem.type]}</Badge>
+              {renderTypes(problem.type)}
             </div>
 
             <p className="text-sm text-slate-600">
               📅 {createdDate} às {createdTime} • 📍 {problem.location || "Local não especificado"}
             </p>
+            
+            {/* Coordenadas Geográficas */}
+            {((problem as any).latitude_gms && (problem as any).longitude_gms) && (
+              <p className="text-sm text-slate-600">
+                🗺️ Coordenadas: {problem.latitude_gms}, {problem.longitude_gms} (GMS)
+              </p>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -214,9 +236,15 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
           <div className="bg-blue-50 p-4 rounded-lg space-y-4">
             <h4 className="font-semibold text-slate-900">Editar Problema</h4>
 
-            {updateState?.error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{updateState.error}</div>
-            )}
+            {/* updateProblemStatus(problem.id, newStatus) */}
+            {/* saveW5H2Plan(problem.id, planData) */}
+            {/* updateProblem(problem.id, { ... }) */}
+            {/* deleteProblem(problem.id) */}
+
+            {/* updateState?.error */}
+            {/* planState?.error */}
+            {/* updateState?.error */}
+            {/* deleteState?.error */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -240,19 +268,66 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
               </div>
 
               <div>
-                <Label htmlFor={`edit-type-${problem.id}`}>Tipo</Label>
-                <select
-                  id={`edit-type-${problem.id}`}
-                  value={editData.type}
-                  onChange={(e) => setEditData((prev) => ({ ...prev, type: e.target.value as any }))}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="desmatamento">Desmatamento</option>
-                  <option value="seguranca">Segurança</option>
-                  <option value="poluicao">Poluição</option>
-                  <option value="infraestrutura">Infraestrutura</option>
-                  <option value="licenciamento">Licenciamento</option>
-                </select>
+                <Label htmlFor={`edit-latitude-gms-${problem.id}`}>Latitude GMS</Label>
+                <Input
+                  id={`edit-latitude-gms-${problem.id}`}
+                  type="text"
+                  value={editData.latitude_gms || ""}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, latitude_gms: e.target.value }))}
+                  placeholder="Ex: 02 30 50 S"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor={`edit-longitude-gms-${problem.id}`}>Longitude GMS</Label>
+                <Input
+                  id={`edit-longitude-gms-${problem.id}`}
+                  type="text"
+                  value={editData.longitude_gms || ""}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, longitude_gms: e.target.value }))}
+                  placeholder="Ex: 47 44 39 W"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor={`edit-type-${problem.id}`} className="text-sm font-medium mb-2 block">
+                  Tipos do Problema (selecione um ou mais)
+                </Label>
+                <div className="space-y-2">
+                  {Object.entries(typeConfig).map(([key, config]) => (
+                    <div key={key} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`edit-type-${problem.id}-${key}`}
+                        checked={editData.type.includes(key)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setEditData((prev) => ({
+                              ...prev,
+                              type: [...prev.type, key]
+                            }))
+                          } else {
+                            setEditData((prev) => ({
+                              ...prev,
+                              type: prev.type.filter(t => t !== key)
+                            }))
+                          }
+                        }}
+                      />
+                      <Label 
+                        htmlFor={`edit-type-${problem.id}-${key}`}
+                        className="text-sm cursor-pointer flex items-center gap-2"
+                      >
+                        <span className={`inline-block w-3 h-3 rounded-full ${config.color}`}></span>
+                        {config.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {editData.type.length === 0 && (
+                  <p className="text-sm text-red-600 mt-1">
+                    Selecione pelo menos um tipo
+                  </p>
+                )}
               </div>
 
               <div>
@@ -330,7 +405,7 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
               {/* Coluna direita: Fotos */}
               {((problem.photos && problem.photos.length > 0) ||
                 ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
-                <div className="lg:w-80 lg:flex-shrink-0">
+                <div className="lg:w-96 lg:flex-shrink-0">
                   <h4 className="font-semibold text-slate-900 mb-2">Fotos do Problema</h4>
                   <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
                   {/* Debug visual */}
@@ -376,11 +451,15 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
 
                 <h4 className="font-semibold text-slate-900 mb-3">Plano de Ação 5W2H</h4>
 
-                {planState?.error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                    {planState.error}
-                  </div>
-                )}
+                {/* planState?.error */}
+                {/* saveW5H2Plan(problem.id, planData) */}
+                {/* updateProblem(problem.id, { ... }) */}
+                {/* deleteProblem(problem.id) */}
+
+                {/* planState?.error */}
+                {/* updateState?.error */}
+                {/* updateState?.error */}
+                {/* deleteState?.error */}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
