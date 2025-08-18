@@ -28,7 +28,7 @@ export async function signIn(prevState: any, formData: FormData) {
   }
 
   // Production mode: use Supabase
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   try {
@@ -60,7 +60,7 @@ export async function signUp(prevState: any, formData: FormData) {
     return { error: "Email and password are required" }
   }
 
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   try {
@@ -86,7 +86,7 @@ export async function signUp(prevState: any, formData: FormData) {
 }
 
 export async function signOut() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   await supabase.auth.signOut()
@@ -94,7 +94,7 @@ export async function signOut() {
 }
 
 export async function createProblem(prevState: any, formData: FormData) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   const {
@@ -207,7 +207,7 @@ export async function createProblem(prevState: any, formData: FormData) {
 }
 
 export async function updateProblemStatus(problemId: string, status: "pendente" | "resolvido") {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   const {
@@ -237,7 +237,7 @@ export async function updateProblemStatus(problemId: string, status: "pendente" 
 }
 
 export async function saveW5H2Plan(prevState: any, formData: FormData) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   const {
@@ -318,7 +318,7 @@ export async function createW5H2Plan(
     how_much: string
   },
 ) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   const {
@@ -359,7 +359,7 @@ export async function updateW5H2Plan(
     how_much: string
   }>,
 ) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   const {
@@ -392,7 +392,7 @@ export async function updateW5H2Plan(
 }
 
 export async function deleteW5H2Plan(planId: string) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   const {
@@ -419,7 +419,7 @@ export async function deleteW5H2Plan(planId: string) {
 }
 
 export async function getProblems() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   const {
@@ -480,7 +480,7 @@ export async function updateProblem(
     longitude_gms?: string
   },
 ) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   const {
@@ -521,7 +521,7 @@ export async function updateProblem(
 }
 
 export async function deleteProblem(problemId: string) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
   const {
