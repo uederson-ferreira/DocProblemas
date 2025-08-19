@@ -195,20 +195,20 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      yPos += 0.55
-      slide.addText("Descrição:", { x: 0.5, y: yPos, w: leftColumnWidth, h: 0.3, fontSize: 14, bold: true })
-      yPos += 0.3
-      slide.addText(problem.description, { x: 0.5, y: yPos, w: leftColumnWidth, h: 1.2, fontSize: 11, wrap: true })
+      yPos += 0.35
+      slide.addText("Descrição:", { x: 0.5, y: yPos, w: leftColumnWidth, h: 0.2, fontSize: 14, bold: true })
+      yPos += 0.15  // Reduzido gap entre título e texto
+      slide.addText(problem.description, { x: 0.5, y: yPos, w: leftColumnWidth, h: 1.0, fontSize: 11, wrap: true })
 
-      yPos += 1.4
+      yPos += 1.05  // Reduzido espaçamento
       if (problem.recommendations) {
-        slide.addText("Recomendações:", { x: 0.5, y: yPos, w: leftColumnWidth, h: 0.3, fontSize: 14, bold: true })
-        yPos += 0.3
+        slide.addText("Recomendações:", { x: 0.5, y: yPos, w: leftColumnWidth, h: 0.2, fontSize: 14, bold: true })
+        yPos += 0.15  // Reduzido gap entre título e texto
         slide.addText(problem.recommendations, {
           x: 0.5,
           y: yPos,
           w: leftColumnWidth,
-          h: 1.0,
+          h: 0.8,  // Reduzido altura para não vazar
           fontSize: 11,
           wrap: true,
         })
@@ -216,8 +216,9 @@ export async function POST(request: NextRequest) {
 
       // Add photos in right column if available
       if (problem.problem_photos && problem.problem_photos.length > 0) {
-        const photoWidth = rightColumnWidth - 0.2
-        const photoHeight = 3.0
+        // Conversão: 8,47cm x 12,14cm = 3.33" x 4.78" (1 polegada = 2.54 cm)
+        const photoWidth = 3.33  // 8,47 cm
+        const photoHeight = 4.78 // 12,14 cm
 
         // Use the first photo as main image, occupying most of the right column
         const mainPhoto = problem.problem_photos[0]

@@ -50,7 +50,6 @@ export function PrintReport({ problems }: PrintReportProps) {
             })
           } catch (error) {
             console.error(`Erro ao processar imagem ${photo.filename}:`, error)
-            // Manter a URL original se falhar
             processedPhotos.push(photo)
           }
         }
@@ -107,21 +106,22 @@ export function PrintReport({ problems }: PrintReportProps) {
 
 function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; problem_photos: Photo[] })[]) {
   const currentDate = new Date().toLocaleDateString("pt-BR")
+  const currentTime = new Date().toLocaleTimeString("pt-BR")
   const totalProblems = problems.length
   const unresolvedProblems = problems.filter((p) => p.status === "pendente").length
   const resolvedProblems = problems.filter((p) => p.status === "resolvido").length
 
   const severityColors = {
-    critico: "#dc2626",
-    alto: "#ea580c",
-    medio: "#d97706",
-    baixo: "#65a30d",
+    critico: "#ef4444",
+    alto: "#f97316", 
+    medio: "#eab308",
+    baixo: "#22c55e",
   }
 
   const severityLabels = {
     critico: "Crítico",
     alto: "Alto",
-    medio: "Médio",
+    medio: "Médio", 
     baixo: "Baixo",
   }
 
@@ -132,7 +132,6 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
     outros: "Outros",
   }
 
-  // Função para renderizar tipos múltiplos
   const renderTypes = (typeString: string) => {
     if (!typeString) return "Não especificado"
     const types = typeString.split(',').map(t => t.trim())
@@ -141,222 +140,676 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
 
   return `
     <!DOCTYPE html>
-    <html>
+    <html lang="pt-BR">
     <head>
       <meta charset="utf-8">
-      <title>Relatório de Problemas - ${currentDate}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Relatório de Problemas de Obra - ${currentDate}</title>
       <style>
-        @media print {
-          @page { margin: 1cm; }
-          body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4; }
-          .problem { page-break-inside: avoid; }
-        }
-        body { 
-          font-family: Arial, sans-serif; 
-          margin: 0; 
-          padding: 20px; 
-          word-wrap: break-word;
-          overflow-wrap: break-word;
-        }
-        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-        .header h1 { margin: 0; color: #333; font-size: 24px; }
-        .header p { margin: 5px 0; color: #666; }
-        .stats { display: flex; justify-content: space-around; margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
-        .stat { text-align: center; }
-        .stat-number { font-size: 24px; font-weight: bold; color: #333; }
-        .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
-        .problem { 
-          margin: 20px 0; 
-          padding: 15px; 
-          border: 1px solid #ddd; 
-          border-radius: 8px; 
-          page-break-inside: avoid;
-          word-wrap: break-word;
-          overflow-wrap: break-word;
-        }
-        .problem-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .problem-title { font-weight: bold; font-size: 14px; }
-        .severity-badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; }
-        .problem-meta { display: flex; gap: 20px; margin: 10px 0; font-size: 11px; color: #666; flex-wrap: wrap; }
-        .coordinates-section { 
-          margin: 10px 0; 
-          padding: 8px; 
-          background: #f0fdf4; 
-          border-left: 4px solid #22c55e; 
-          border-radius: 4px; 
-          font-size: 11px;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        /* Layout similar à interface - descrição e recomendações à esquerda, fotos à direita */
-        .problem-content { 
-          display: flex; 
-          gap: 20px; 
-          margin: 15px 0;
+        :root {
+          --primary-color: #2563eb;
+          --secondary-color: #64748b;
+          --success-color: #059669;
+          --warning-color: #d97706;
+          --danger-color: #dc2626;
+          --gray-50: #f8fafc;
+          --gray-100: #f1f5f9;
+          --gray-200: #e2e8f0;
+          --gray-300: #cbd5e1;
+          --gray-600: #475569;
+          --gray-700: #334155;
+          --gray-800: #1e293b;
+          --gray-900: #0f172a;
+        }
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        @media print {
+          @page { 
+            margin: 15mm; 
+            size: A4;
+          }
+          body { 
+            font-size: 11px; 
+            line-height: 1.4;
+            color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+          }
+          .page-break { 
+            page-break-before: always; 
+          }
+          .no-break { 
+            page-break-inside: avoid; 
+          }
+          .header-main {
+            position: relative;
+          }
+        }
+
+        body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          color: var(--gray-800);
+          background: white;
+          line-height: 1.6;
+          font-size: 12px;
+        }
+
+        /* Cabeçalho Principal */
+        .header-main {
+          background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+          color: white;
+          padding: 2rem;
+          margin-bottom: 2rem;
+          border-radius: 12px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .header-main::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 200px;
+          height: 200px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 50%;
+          transform: translate(50%, -50%);
+        }
+
+        .header-content {
+          position: relative;
+          z-index: 2;
+        }
+
+        .header-title {
+          font-size: 2rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .header-subtitle {
+          font-size: 1.1rem;
+          opacity: 0.9;
+          font-weight: 400;
+          margin-bottom: 1rem;
+        }
+
+        .header-meta {
+          display: flex;
+          gap: 2rem;
+          font-size: 0.95rem;
+          opacity: 0.95;
+        }
+
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        /* Dashboard de Estatísticas */
+        .stats-dashboard {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1.5rem;
+          margin: 2rem 0;
+        }
+
+        .stat-card {
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: 12px;
+          padding: 1.5rem;
+          text-align: center;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+          transform: translateY(-2px);
+        }
+
+        .stat-icon {
+          width: 48px;
+          height: 48px;
+          margin: 0 auto 1rem;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+        }
+
+        .stat-total .stat-icon { background: linear-gradient(135deg, var(--primary-color), #1d4ed8); color: white; }
+        .stat-pending .stat-icon { background: linear-gradient(135deg, var(--danger-color), #b91c1c); color: white; }
+        .stat-resolved .stat-icon { background: linear-gradient(135deg, var(--success-color), #047857); color: white; }
+
+        .stat-number {
+          font-size: 2rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+        }
+
+        .stat-total .stat-number { color: var(--primary-color); }
+        .stat-pending .stat-number { color: var(--danger-color); }
+        .stat-resolved .stat-number { color: var(--success-color); }
+
+        .stat-label {
+          font-size: 0.9rem;
+          color: var(--gray-600);
+          font-weight: 500;
+        }
+
+        /* Cards de Problemas */
+        .problem-card {
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: 16px;
+          margin: 2rem 0;
+          overflow: hidden;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .problem-header {
+          background: var(--gray-50);
+          padding: 1.5rem;
+          border-bottom: 1px solid var(--gray-200);
+          display: flex;
+          justify-content: space-between;
           align-items: flex-start;
+          gap: 1rem;
         }
-        .problem-left { 
-          flex: 1; 
+
+        .problem-title-section {
+          flex: 1;
+        }
+
+        .problem-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: var(--gray-900);
+          margin-bottom: 0.5rem;
+        }
+
+        .problem-number {
+          font-size: 0.85rem;
+          color: var(--gray-600);
+          font-weight: 500;
+        }
+
+        .severity-badge {
+          padding: 0.5rem 1rem;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: white;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .problem-meta-grid {
+          background: white;
+          padding: 1.5rem;
+          border-bottom: 1px solid var(--gray-100);
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1rem;
+        }
+
+        .meta-item-grid {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem;
+          background: var(--gray-50);
+          border-radius: 8px;
+        }
+
+        .meta-icon {
+          width: 32px;
+          height: 32px;
+          background: var(--primary-color);
+          color: white;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.9rem;
+        }
+
+        .meta-content {
+          flex: 1;
+        }
+
+        .meta-label {
+          font-size: 0.8rem;
+          color: var(--gray-600);
+          font-weight: 500;
+          margin-bottom: 0.2rem;
+        }
+
+        .meta-value {
+          font-weight: 600;
+          color: var(--gray-800);
+        }
+
+        /* Coordenadas */
+        .coordinates-section {
+          margin: 1.5rem;
+          padding: 1.5rem;
+          background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+          border: 1px solid #bbf7d0;
+          border-radius: 12px;
+          position: relative;
+        }
+
+        .coordinates-section::before {
+          content: '🗺️';
+          position: absolute;
+          top: -8px;
+          left: 1rem;
+          background: white;
+          padding: 0 0.5rem;
+          font-size: 1.2rem;
+        }
+
+        .coordinates-title {
+          font-weight: 600;
+          color: var(--success-color);
+          margin-bottom: 0.75rem;
+          font-size: 0.95rem;
+        }
+
+        .coordinates-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+
+        .coordinate-item {
+          background: white;
+          padding: 0.75rem;
+          border-radius: 6px;
+          border: 1px solid #bbf7d0;
+        }
+
+        /* Conteúdo Principal */
+        .problem-content {
+          display: grid;
+          grid-template-columns: 1fr 350px;
+          gap: 2rem;
+          padding: 1.5rem;
+        }
+
+        .content-left {
           min-width: 0;
+        }
+
+        .content-right {
+          background: var(--gray-50);
+          border-radius: 12px;
+          padding: 1.5rem;
+        }
+
+        .description-section {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 12px;
+          border: 1px solid var(--gray-200);
+          margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-weight: 600;
+          color: var(--gray-800);
+          margin-bottom: 1rem;
+          font-size: 1rem;
+        }
+
+        .description-text {
+          color: var(--gray-700);
+          white-space: pre-wrap;
           word-wrap: break-word;
-          overflow-wrap: break-word;
+          line-height: 1.6;
         }
-        .problem-right { 
-          width: 300px; 
-          flex-shrink: 0;
-        }
-        
-        .problem-description { 
-          margin: 10px 0; 
-          word-wrap: break-word; 
-          overflow-wrap: break-word; 
-          white-space: pre-wrap; 
-          max-width: 100%;
-          hyphens: auto;
-        }
+
         .recommendations-section {
-          margin: 15px 0;
-          padding: 10px;
-          background: #f0f9ff;
-          border-left: 4px solid #3b82f6;
-          border-radius: 4px;
+          background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+          border: 1px solid #bfdbfe;
+          border-radius: 12px;
+          padding: 1.5rem;
+          position: relative;
+        }
+
+        .recommendations-section::before {
+          content: '💡';
+          position: absolute;
+          top: -8px;
+          left: 1rem;
+          background: white;
+          padding: 0 0.5rem;
+          font-size: 1.2rem;
+        }
+
+        /* Fotos */
+        .photos-section {
+          margin-top: 1rem;
+        }
+
+        .photos-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+
+        .photo-item {
+          background: white;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid var(--gray-200);
+        }
+
+        .photo-item img {
+          width: 100%;
+          height: 180px;
+          object-fit: cover;
+          background: var(--gray-100);
+        }
+
+        .photo-caption {
+          padding: 0.75rem;
+          font-size: 0.8rem;
+          color: var(--gray-600);
+          background: var(--gray-50);
+          text-align: center;
+          border-top: 1px solid var(--gray-200);
+        }
+
+        /* Plano 5W2H */
+        .w5h2-section {
+          margin: 1.5rem;
+          background: linear-gradient(135deg, #fafafa 0%, #f4f4f5 100%);
+          border-radius: 16px;
+          padding: 2rem;
+          border: 1px solid var(--gray-200);
+        }
+
+        .w5h2-title {
+          text-align: center;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--gray-800);
+          margin-bottom: 2rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+
+        .w5h2-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 1.5rem;
+        }
+
+        .w5h2-item {
+          background: white;
+          border-radius: 12px;
+          padding: 1.25rem;
+          border: 1px solid var(--gray-200);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .w5h2-label {
+          font-weight: 700;
+          color: var(--primary-color);
+          margin-bottom: 0.75rem;
+          font-size: 0.9rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .w5h2-value {
+          color: var(--gray-700);
+          white-space: pre-wrap;
           word-wrap: break-word;
-          overflow-wrap: break-word;
-          white-space: pre-wrap;
-          max-width: 100%;
-          hyphens: auto;
+          line-height: 1.5;
         }
-        .photos-section { margin: 0; }
-        .photos-title { font-weight: bold; margin-bottom: 10px; color: #333; }
-        
-        /* Fotos em coluna vertical para caber melhor no espaço */
-        .photos-grid { 
-          display: flex; 
-          flex-direction: column; 
-          gap: 10px; 
+
+        /* Estados vazios */
+        .no-problems {
+          text-align: center;
+          padding: 4rem 2rem;
+          color: var(--gray-600);
+          background: var(--gray-50);
+          border-radius: 16px;
+          margin: 2rem 0;
         }
-        .photo-item { text-align: center; }
-        .photo-item img { 
-          max-width: 100%; 
-          max-height: 200px; 
-          object-fit: contain; 
-          border: 1px solid #ddd; 
-          border-radius: 4px;
-          background: #f9f9f9;
+
+        .no-problems-icon {
+          font-size: 4rem;
+          margin-bottom: 1rem;
+          opacity: 0.5;
         }
-        .photo-caption { font-size: 10px; color: #666; margin-top: 5px; }
-        
-        /* Layout responsivo para impressão */
+
+        /* Responsividade para impressão */
         @media print {
-          .problem-content { 
-            flex-direction: column; 
+          .problem-content {
+            grid-template-columns: 1fr;
           }
-          .problem-right { 
-            width: 100%; 
-            margin-top: 15px;
+          
+          .content-right {
+            margin-top: 1rem;
+            background: white !important;
+            border: 1px solid var(--gray-200);
           }
-          .photos-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 10px; 
+
+          .photos-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .w5h2-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .stats-dashboard {
+            grid-template-columns: repeat(3, 1fr);
           }
         }
-        
-        .w5h2-section { margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 4px; }
-        .w5h2-title { font-weight: bold; margin-bottom: 10px; color: #333; }
-        .w5h2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .w5h2-item { margin-bottom: 8px; }
-        .w5h2-label { font-weight: bold; color: #555; font-size: 11px; }
-        .w5h2-value { 
-          margin-top: 2px; 
-          font-size: 11px; 
-          word-wrap: break-word; 
-          overflow-wrap: break-word;
-          white-space: pre-wrap;
-          hyphens: auto;
+
+        @media screen and (max-width: 768px) {
+          .problem-content {
+            grid-template-columns: 1fr;
+          }
+          
+          .header-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+          }
+
+          .stats-dashboard {
+            grid-template-columns: 1fr;
+          }
         }
-        .no-problems { text-align: center; padding: 40px; color: #666; }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>📋 Relatório de Problemas de Obra</h1>
-        <p>Documentação de problemas de segurança e ambientais</p>
-        <p>Data de geração: ${currentDate}</p>
+      <!-- Cabeçalho Principal -->
+      <div class="header-main">
+        <div class="header-content">
+          <h1 class="header-title">
+            <span>📋</span>
+            Relatório de Problemas de Obra
+          </h1>
+          <p class="header-subtitle">Documentação detalhada de problemas de segurança e ambientais</p>
+          <div class="header-meta">
+            <div class="meta-item">
+              <span>📅</span>
+              <span>Data: ${currentDate}</span>
+            </div>
+            <div class="meta-item">
+              <span>🕐</span>
+              <span>Hora: ${currentTime}</span>
+            </div>
+            <div class="meta-item">
+              <span>📊</span>
+              <span>Total de registros: ${totalProblems}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="stats">
-        <div class="stat">
+      <!-- Dashboard de Estatísticas -->
+      <div class="stats-dashboard">
+        <div class="stat-card stat-total">
+          <div class="stat-icon">📋</div>
           <div class="stat-number">${totalProblems}</div>
           <div class="stat-label">Total de Problemas</div>
         </div>
-        <div class="stat">
-          <div class="stat-number" style="color: #dc2626;">${unresolvedProblems}</div>
-          <div class="stat-label">Não Resolvidos</div>
+        <div class="stat-card stat-pending">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-number">${unresolvedProblems}</div>
+          <div class="stat-label">Pendentes</div>
         </div>
-        <div class="stat">
-          <div class="stat-number" style="color: #16a34a;">${resolvedProblems}</div>
+        <div class="stat-card stat-resolved">
+          <div class="stat-icon">✅</div>
+          <div class="stat-number">${resolvedProblems}</div>
           <div class="stat-label">Resolvidos</div>
         </div>
       </div>
 
+      <!-- Lista de Problemas -->
       ${
         problems.length === 0
-          ? '<div class="no-problems">Nenhum problema registrado</div>'
+          ? `
+            <div class="no-problems">
+              <div class="no-problems-icon">📋</div>
+              <h3>Nenhum problema registrado</h3>
+              <p>Não há problemas cadastrados no sistema no momento.</p>
+            </div>
+          `
           : problems
               .map(
-                (problem) => `
-          <div class="problem">
+                (problem, index) => `
+          <div class="problem-card no-break">
+            <!-- Cabeçalho do Problema -->
             <div class="problem-header">
-              <div class="problem-title">${problem.title || `Problema #${String(problem.problem_number || 1).padStart(3, "0")}`}</div>
+              <div class="problem-title-section">
+                <h2 class="problem-title">${problem.title || `Problema sem título`}</h2>
+                <div class="problem-number">#${String(problem.problem_number || index + 1).padStart(3, "0")}</div>
+              </div>
               <div class="severity-badge" style="background-color: ${severityColors[problem.severity as keyof typeof severityColors]}">
                 ${severityLabels[problem.severity as keyof typeof severityLabels]}
               </div>
             </div>
-            
-            <div class="problem-meta">
-              <div><strong>Tipo:</strong> ${renderTypes(problem.type)}</div>
-              <div><strong>Status:</strong> ${problem.status === "pendente" ? "Não Resolvido" : "Resolvido"}</div>
-              <div><strong>Data:</strong> ${new Date(problem.created_at).toLocaleDateString("pt-BR")}</div>
-              ${problem.location ? `<div><strong>Local:</strong> ${problem.location}</div>` : ""}
+
+            <!-- Metadados -->
+            <div class="problem-meta-grid">
+              <div class="meta-item-grid">
+                <div class="meta-icon">🏷️</div>
+                <div class="meta-content">
+                  <div class="meta-label">Tipo</div>
+                  <div class="meta-value">${renderTypes(problem.type)}</div>
+                </div>
+              </div>
+              <div class="meta-item-grid">
+                <div class="meta-icon">📊</div>
+                <div class="meta-content">
+                  <div class="meta-label">Status</div>
+                  <div class="meta-value">${problem.status === "pendente" ? "Pendente" : "Resolvido"}</div>
+                </div>
+              </div>
+              <div class="meta-item-grid">
+                <div class="meta-icon">📅</div>
+                <div class="meta-content">
+                  <div class="meta-label">Data de Registro</div>
+                  <div class="meta-value">${new Date(problem.created_at).toLocaleDateString("pt-BR")}</div>
+                </div>
+              </div>
+              ${problem.location ? `
+              <div class="meta-item-grid">
+                <div class="meta-icon">📍</div>
+                <div class="meta-content">
+                  <div class="meta-label">Local</div>
+                  <div class="meta-value">${problem.location}</div>
+                </div>
+              </div>
+              ` : ""}
             </div>
-            
+
+            <!-- Coordenadas -->
             ${(problem as any).latitude_gms && (problem as any).longitude_gms ? `
             <div class="coordinates-section">
-              <strong>🗺️ Coordenadas Geográficas (SIRGAS 2000):</strong><br>
-              <strong>Latitude:</strong> ${(problem as any).latitude_gms} | 
-              <strong>Longitude:</strong> ${(problem as any).longitude_gms}
+              <div class="coordinates-title">Coordenadas Geográficas (SIRGAS 2000)</div>
+              <div class="coordinates-grid">
+                <div class="coordinate-item">
+                  <strong>Latitude:</strong> ${(problem as any).latitude_gms}
+                </div>
+                <div class="coordinate-item">
+                  <strong>Longitude:</strong> ${(problem as any).longitude_gms}
+                </div>
+              </div>
               ${(problem as any).latitude_decimal && (problem as any).longitude_decimal ? 
-                `<br><em>Decimal: ${(problem as any).latitude_decimal.toFixed(6)}°, ${(problem as any).longitude_decimal.toFixed(6)}°</em>` : 
+                `<div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--gray-600);">
+                  <em>Decimal: ${(problem as any).latitude_decimal.toFixed(6)}°, ${(problem as any).longitude_decimal.toFixed(6)}°</em>
+                </div>` : 
                 ''
               }
             </div>
             ` : ''}
-            
+
+            <!-- Conteúdo Principal -->
             <div class="problem-content">
-              <div class="problem-left">
-                <div class="problem-description">
-                  <strong>Descrição:</strong><br>
-                  ${problem.description}
+              <div class="content-left">
+                <!-- Descrição -->
+                <div class="description-section">
+                  <h3 class="section-title">
+                    <span>📝</span>
+                    Descrição do Problema
+                  </h3>
+                  <div class="description-text">${problem.description}</div>
                 </div>
 
+                <!-- Recomendações -->
                 ${
                   (problem as any).recommendations
                     ? `
                   <div class="recommendations-section">
-                    <strong>💡 Recomendações:</strong><br>
-                    ${(problem as any).recommendations}
+                    <h3 class="section-title" style="color: var(--primary-color);">
+                      <span>💡</span>
+                      Recomendações
+                    </h3>
+                    <div class="description-text">${(problem as any).recommendations}</div>
                   </div>
                 `
                     : ""
                 }
               </div>
 
+              <!-- Fotos -->
               ${
                 problem.problem_photos && problem.problem_photos.length > 0
                   ? `
-                <div class="problem-right">
+                <div class="content-right">
+                  <h3 class="section-title">
+                    <span>📷</span>
+                    Evidências Fotográficas
+                  </h3>
                   <div class="photos-section">
-                    <div class="photos-title">📷 Fotos do Problema</div>
                     <div class="photos-grid">
                       ${problem.problem_photos
                         .map(
@@ -376,38 +829,42 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
               }
             </div>
 
+            <!-- Plano 5W2H -->
             ${
               problem.w5h2_plans && problem.w5h2_plans.length > 0
                 ? `
               <div class="w5h2-section">
-                <div class="w5h2-title">📋 Plano de Ação 5W2H</div>
+                <h3 class="w5h2-title">
+                  <span>📋</span>
+                  Plano de Ação 5W2H
+                </h3>
                 <div class="w5h2-grid">
                   <div class="w5h2-item">
-                    <div class="w5h2-label">O QUE (What):</div>
+                    <div class="w5h2-label">O QUE (What)</div>
                     <div class="w5h2-value">${problem.w5h2_plans[0].what || "Não preenchido"}</div>
                   </div>
                   <div class="w5h2-item">
-                    <div class="w5h2-label">POR QUE (Why):</div>
+                    <div class="w5h2-label">POR QUE (Why)</div>
                     <div class="w5h2-value">${problem.w5h2_plans[0].why || "Não preenchido"}</div>
                   </div>
                   <div class="w5h2-item">
-                    <div class="w5h2-label">QUANDO (When):</div>
+                    <div class="w5h2-label">QUANDO (When)</div>
                     <div class="w5h2-value">${problem.w5h2_plans[0].when_plan || "Não preenchido"}</div>
                   </div>
                   <div class="w5h2-item">
-                    <div class="w5h2-label">ONDE (Where):</div>
+                    <div class="w5h2-label">ONDE (Where)</div>
                     <div class="w5h2-value">${problem.w5h2_plans[0].where_plan || "Não preenchido"}</div>
                   </div>
                   <div class="w5h2-item">
-                    <div class="w5h2-label">QUEM (Who):</div>
+                    <div class="w5h2-label">QUEM (Who)</div>
                     <div class="w5h2-value">${problem.w5h2_plans[0].who || "Não preenchido"}</div>
                   </div>
                   <div class="w5h2-item">
-                    <div class="w5h2-label">COMO (How):</div>
+                    <div class="w5h2-label">COMO (How)</div>
                     <div class="w5h2-value">${problem.w5h2_plans[0].how || "Não preenchido"}</div>
                   </div>
                   <div class="w5h2-item">
-                    <div class="w5h2-label">QUANTO (How Much):</div>
+                    <div class="w5h2-label">QUANTO (How Much)</div>
                     <div class="w5h2-value">${problem.w5h2_plans[0].how_much || "Não preenchido"}</div>
                   </div>
                 </div>
@@ -420,6 +877,16 @@ function generatePrintHTML(problems: (Problem & { w5h2_plans: W5H2Plan[]; proble
               )
               .join("")
       }
+
+      <!-- Rodapé -->
+      <div style="margin-top: 3rem; padding: 2rem; background: var(--gray-50); border-radius: 12px; text-align: center; border: 1px solid var(--gray-200);">
+        <div style="color: var(--gray-600); font-size: 0.9rem; margin-bottom: 0.5rem;">
+          📄 Relatório gerado automaticamente pelo sistema
+        </div>
+        <div style="color: var(--gray-500); font-size: 0.8rem;">
+          ${currentDate} às ${currentTime} | Total de ${totalProblems} problema${totalProblems !== 1 ? 's' : ''} documentado${totalProblems !== 1 ? 's' : ''}
+        </div>
+      </div>
     </body>
     </html>
   `
