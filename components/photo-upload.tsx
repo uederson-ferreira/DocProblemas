@@ -60,10 +60,14 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUplo
         const formData = new FormData()
         formData.append("file", file)
 
+        console.log(`Iniciando upload de ${file.name} (${file.size} bytes)`)
+        
         const response = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         })
+
+        console.log(`Resposta do upload: ${response.status} ${response.statusText}`)
 
         if (!response.ok) {
           let errorMessage = "Upload failed"
@@ -99,6 +103,8 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUplo
         }
 
         const result = await response.json()
+        console.log(`Upload concluído para ${file.name}:`, result)
+        
         newPhotos.push({
           url: result.url,
           filename: result.filename,

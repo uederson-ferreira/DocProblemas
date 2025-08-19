@@ -6,8 +6,11 @@ export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("Iniciando upload - Headers:", Object.fromEntries(request.headers.entries()))
+    
     const contentLength = request.headers.get("content-length")
     if (contentLength && Number.parseInt(contentLength) > 10 * 1024 * 1024) {
+      console.log(`Arquivo rejeitado - muito grande: ${contentLength} bytes`)
       return NextResponse.json(
         {
           error: "Arquivo muito grande. Máximo 10MB permitido.",
@@ -20,25 +23,40 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File
 
     if (!file) {
+      console.log("Nenhum arquivo fornecido")
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
+    console.log(`Arquivo recebido: ${file.name}, tamanho: ${file.size} bytes, tipo: ${file.type}`)
+
     if (file.size > 10 * 1024 * 1024) {
+      console.log(`Arquivo rejeitado - muito grande: ${file.size} bytes`)
       return NextResponse.json({ error: "Arquivo muito grande. Máximo 10MB permitido." }, { status: 413 })
     }
 
     if (!file.type.startsWith("image/")) {
+      console.log(`Arquivo rejeitado - tipo inválido: ${file.type}`)
       return NextResponse.json({ error: "Apenas imagens são permitidas" }, { status: 400 })
+    }
+
+    // Check if Vercel Blob token is available
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error("BLOB_READ_WRITE_TOKEN não configurado")
+      return NextResponse.json({ error: "Configuração de upload não disponível" }, { status: 500 })
     }
 
     // Generate unique filename with timestamp
     const timestamp = Date.now()
     const filename = `problem-${timestamp}-${file.name}`
 
+    console.log(`Fazendo upload para Vercel Blob: ${filename}`)
+
     // Upload to Vercel Blob
     const blob = await put(filename, file, {
       access: "public",
     })
+
+    console.log(`Upload concluído: ${blob.url}`)
 
     return NextResponse.json({
       url: blob.url,
@@ -55,6 +73,9 @@ export async function POST(request: NextRequest) {
       }
       if (error.message.includes("timeout")) {
         return NextResponse.json({ error: "Timeout no upload. Tente novamente." }, { status: 408 })
+      }
+      if (error.message.includes("Unauthorized") || error.message.includes("401")) {
+        return NextResponse.json({ error: "Token de upload inválido" }, { status: 401 })
       }
     }
 
