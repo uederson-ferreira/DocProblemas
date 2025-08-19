@@ -520,7 +520,7 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
               {/* Fotos - Direita no desktop, abaixo no mobile */}
               {((problem.photos && problem.photos.length > 0) ||
                 ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
-                <div className="lg:w-96 lg:flex-shrink-0">
+                <div className="lg:w-[500px] lg:flex-shrink-0">
                   <h4 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">📸 Fotos do Problema</h4>
                   <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
                 </div>
