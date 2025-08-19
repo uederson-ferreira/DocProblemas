@@ -125,39 +125,34 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
           </div>
 
           {/* Linha 2: Botões de Ação */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+          <div className="flex flex-col gap-3">
             {/* Botão principal sempre em destaque */}
             <Button 
               onClick={() => setShowAddDialog(true)} 
-              className="flex items-center justify-center gap-2 w-full sm:w-auto order-1"
+              className="flex items-center justify-center gap-2 w-full"
             >
               <Plus className="w-4 h-4" />
               Novo Problema
             </Button>
 
-            {/* Botões secundários em linha no mobile */}
-            <div className="flex gap-2 order-2 sm:order-2">
+            {/* Botões de exportação em grid responsivo */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <ExportExcel problems={problems || []} />
+
+              <ExportPPTX problems={problems || []} />
+
+              <PrintReport problems={problems || []} />
+
               <Button 
                 variant="outline" 
                 onClick={handleExportData} 
-                className="flex items-center justify-center gap-2 flex-1 sm:flex-initial bg-transparent"
+                className="flex items-center justify-center gap-2 bg-transparent"
                 size="sm"
               >
                 <Download className="w-4 h-4" />
-                <span className="hidden xs:inline">JSON</span>
+                <span className="hidden sm:inline">JSON</span>
+                <span className="sm:hidden">JSON</span>
               </Button>
-
-              <div className="flex-1 sm:flex-initial">
-                <ExportExcel problems={problems || []} />
-              </div>
-
-              <div className="flex-1 sm:flex-initial">
-                <PrintReport problems={problems || []} />
-              </div>
-
-              <div className="flex-1 sm:flex-initial">
-                <ExportPPTX problems={problems || []} />
-              </div>
             </div>
           </div>
         </div>

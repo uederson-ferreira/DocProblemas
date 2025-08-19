@@ -96,10 +96,11 @@ export function PrintReport({ problems }: PrintReportProps) {
       variant="outline"
       onClick={handlePrint}
       disabled={isLoading}
-      className="flex items-center gap-2 bg-transparent"
+      className="flex items-center justify-center gap-2 bg-transparent w-full"
     >
       <Printer className="w-4 h-4" />
-      {isLoading ? "Preparando..." : "Imprimir Relatório"}
+      <span className="hidden sm:inline">{isLoading ? "Preparando..." : "Imprimir Relatório"}</span>
+      <span className="sm:hidden">{isLoading ? "..." : "Print"}</span>
     </Button>
   )
 }

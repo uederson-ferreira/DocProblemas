@@ -245,21 +245,21 @@ export function ExportExcel({ problems }: ExportExcelProps) {
 
   return (
     <Button
-      variant="outline"
       onClick={exportToExcel}
       disabled={isExporting || problems.length === 0}
-      className="flex items-center gap-2 flex-1 sm:flex-initial bg-transparent"
-      size="sm"
+      className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
     >
       {isExporting ? (
         <>
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-          <span className="hidden xs:inline">Exportando...</span>
+          <Download className="mr-2 h-4 w-4 animate-spin" />
+          <span className="hidden sm:inline">Exportando...</span>
+          <span className="sm:hidden">...</span>
         </>
       ) : (
         <>
-          <FileSpreadsheet className="w-4 h-4 text-green-600" />
-          <span className="hidden xs:inline">Excel</span>
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">Exportar Excel</span>
+          <span className="sm:hidden">Excel</span>
         </>
       )}
     </Button>

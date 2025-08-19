@@ -494,19 +494,10 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
           </div>
         ) : (
           <div className="space-y-3 sm:space-y-4">
-            {/* Mobile First: Fotos primeiro no mobile, lado a lado no desktop */}
-            <div className="flex flex-col gap-4">
-              {/* Fotos - Prioridade mobile */}
-              {((problem.photos && problem.photos.length > 0) ||
-                ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
-                <div className="order-1 lg:order-2">
-                  <h4 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">📸 Fotos do Problema</h4>
-                  <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
-                </div>
-              )}
-
-              {/* Descrição e Recomendações - Mobile friendly */}
-              <div className="order-2 lg:order-1 space-y-3 sm:space-y-4">
+            {/* Layout responsivo: Mobile = empilhado, Desktop = lado a lado */}
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Descrição e Recomendações - Esquerda no desktop */}
+              <div className="flex-1 min-w-0 space-y-3 sm:space-y-4">
                 {/* Descrição do Problema */}
                 <div>
                   <h4 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">📝 Descrição do Problema</h4>
@@ -525,6 +516,15 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
                   </div>
                 )}
               </div>
+
+              {/* Fotos - Direita no desktop, abaixo no mobile */}
+              {((problem.photos && problem.photos.length > 0) ||
+                ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
+                <div className="lg:w-96 lg:flex-shrink-0">
+                  <h4 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">📸 Fotos do Problema</h4>
+                  <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
+                </div>
+              )}
             </div>
           </div>
         )}

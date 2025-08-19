@@ -73,17 +73,19 @@ export function ExportPPTX({ problems }: ExportPPTXProps) {
     <Button
       onClick={generatePPTX}
       disabled={isGenerating || problems.length === 0}
-      className="bg-orange-600 hover:bg-orange-700 text-white"
+      className="bg-orange-600 hover:bg-orange-700 text-white w-full sm:w-auto"
     >
       {isGenerating ? (
         <>
           <Download className="mr-2 h-4 w-4 animate-spin" />
-          Gerando...
+          <span className="hidden sm:inline">Gerando...</span>
+          <span className="sm:hidden">...</span>
         </>
       ) : (
         <>
           <FileText className="mr-2 h-4 w-4" />
-          Exportar PowerPoint
+          <span className="hidden sm:inline">Exportar PowerPoint</span>
+          <span className="sm:hidden">PPT</span>
         </>
       )}
     </Button>
