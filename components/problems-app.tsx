@@ -11,6 +11,7 @@ import type { Problem, W5H2Plan } from "@/lib/supabase/client"
 import { signOut } from "@/lib/actions"
 import { PrintReport } from "@/components/print-report"
 import { ExportPPTX } from "@/components/export-pptx"
+import { ExportExcel } from "@/components/export-excel"
 
 interface ProblemsAppProps {
   initialProblems: (Problem & { w5h2_plans: W5H2Plan[] })[]
@@ -143,8 +144,12 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
                 size="sm"
               >
                 <Download className="w-4 h-4" />
-                <span className="hidden xs:inline">Exportar</span>
+                <span className="hidden xs:inline">JSON</span>
               </Button>
+
+              <div className="flex-1 sm:flex-initial">
+                <ExportExcel problems={problems || []} />
+              </div>
 
               <div className="flex-1 sm:flex-initial">
                 <PrintReport problems={problems || []} />
