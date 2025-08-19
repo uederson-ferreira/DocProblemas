@@ -89,7 +89,37 @@ export async function signOut() {
   const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
-  await supabase.auth.signOut()
+  try {
+    // 1. Fazer logout no Supabase
+    await supabase.auth.signOut()
+    
+    // 2. Limpar cookies manualmente para garantir limpeza completa
+    // Supabase auth cookies que podem ficar "sujos"
+    const authCookies = [
+      'sb-access-token',
+      'sb-refresh-token', 
+      'supabase-auth-token',
+      'supabase.auth.token'
+    ]
+    
+    authCookies.forEach(cookieName => {
+      try {
+        cookieStore.delete(cookieName)
+      } catch (error) {
+        // Ignore se cookie não existir
+        console.log(`Cookie ${cookieName} não encontrado para deletar`)
+      }
+    })
+    
+    // 3. Revalidar todas as páginas para limpar cache
+    revalidatePath('/', 'layout')
+    
+  } catch (error) {
+    console.error("Erro durante logout:", error)
+    // Mesmo com erro, limpar cookies e prosseguir
+    revalidatePath('/', 'layout')
+  }
+  
   redirect("/auth/login")
 }
 
@@ -97,11 +127,26 @@ export async function createProblem(prevState: any, formData: FormData) {
   const cookieStore = await cookies()
   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: "User not authenticated" }
+  let user
+  try {
+    const {
+      data: { user: authUser },
+      error: authError
+    } = await supabase.auth.getUser()
+    
+    if (authError) {
+      console.error("Auth error in createProblem:", authError)
+      return { error: "Sessão inválida. Faça login novamente." }
+    }
+    
+    if (!authUser) {
+      return { error: "User not authenticated" }
+    }
+    
+    user = authUser
+  } catch (error) {
+    console.error("Error getting user in createProblem:", error)
+    return { error: "Erro de autenticação. Faça logout e login novamente." }
   }
 
   try {
@@ -114,7 +159,7 @@ export async function createProblem(prevState: any, formData: FormData) {
     const latitude_gms = formData.get("latitude_gms")?.toString()
     const longitude_gms = formData.get("longitude_gms")?.toString()
 
-    if (!title || !description || !type || !severity || !location) {
+    if (!title || !description || !type || !severity) {
       return { error: "Missing required fields" }
     }
 
@@ -173,25 +218,22 @@ export async function createProblem(prevState: any, formData: FormData) {
     }
 
     revalidatePath("/")
+    // Buscar o problema completo incluindo o problem_number gerado pelo banco
+    const { data: fullProblem, error: fetchError } = await supabase
+      .from("problems")
+      .select("*")
+      .eq("id", problemData.id)
+      .single()
+
+    if (fetchError) {
+      console.error("Error fetching created problem:", fetchError)
+      return { error: "Problem created but failed to retrieve details" }
+    }
+
     return { 
       success: "Problem created successfully",
       problem: {
-        id: problemData.id,
-        title,
-        description,
-        type: typeString,
-        severity,
-        location,
-        status: "pendente" as const,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        user_id: user.id,
-        problem_number: 0, // Será preenchido pelo banco
-        recommendations: recommendations || null,
-        latitude_gms: latitude_gms || null,
-        longitude_gms: longitude_gms || null,
-        latitude_decimal: null,
-        longitude_decimal: null,
+        ...fullProblem,
         problem_photos: photoCount > 0 ? Array.from({ length: photoCount }, (_, i) => ({
           id: `temp-${i}`,
           filename: formData.get(`filename_${i}`)?.toString() || "",
