@@ -13,9 +13,11 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { ChevronDown, ChevronUp, AlertTriangle, Edit, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { updateProblemStatus, saveW5H2Plan, updateProblem, deleteProblem, createW5H2Plan } from "@/lib/actions"
+import { updateProblemStatus, saveW5H2Plan, updateProblem, deleteProblem, createW5H2Plan, resolveProblem, updateProblemPhotos } from "@/lib/actions"
 import { PhotoCarousel } from "./photo-carousel"
 import { W5H2List } from "./w5h2-list"
+import { PhotoEdit } from "./photo-edit"
+import { ResolveProblemDialog } from "./resolve-problem-dialog"
 
 interface ProblemCardProps {
   problem: Problem & { w5h2_plans: W5H2Plan[]; photos?: Photo[] }
@@ -62,6 +64,9 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
 
   const [showW5H2, setShowW5H2] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [showResolveDialog, setShowResolveDialog] = useState(false)
+  const [isResolving, setIsResolving] = useState(false)
+  const [editingPhotos, setEditingPhotos] = useState(false)
   const [editData, setEditData] = useState({
     title: problem.title || "",
     description: problem.description,
@@ -84,16 +89,53 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
   })
 
   const handleResolvedChange = async (checked: boolean) => {
-    const newStatus = checked ? "resolvido" : "pendente"
-    const result = await updateProblemStatus(problem.id, newStatus)
+    if (checked && problem.status === "pendente") {
+      // Abrir diálogo para marcar como resolvido
+      setShowResolveDialog(true)
+    } else if (!checked && problem.status === "resolvido") {
+      // Marcar como pendente diretamente
+      const result = await updateProblemStatus(problem.id, "pendente")
+      if (!result?.error) {
+        onUpdate({
+          ...problem,
+          status: "pendente",
+          updated_at: new Date().toISOString(),
+        })
+      }
+    }
+  }
+
+  const handleResolve = async (data: { 
+    resolutionNotes: string
+    resolutionPhotos: Array<{
+      url: string
+      filename: string
+      file?: File
+      photo_type?: 'problem' | 'resolution'
+    }>
+  }) => {
+    setIsResolving(true)
+    
+    const result = await resolveProblem(problem.id, {
+      resolutionNotes: data.resolutionNotes,
+      resolutionPhotos: data.resolutionPhotos.map(photo => ({
+        url: photo.url,
+        filename: photo.filename
+      }))
+    })
 
     if (!result?.error) {
       onUpdate({
         ...problem,
-        status: newStatus,
+        status: "resolvido",
         updated_at: new Date().toISOString(),
+        resolved_at: new Date().toISOString(),
+        resolution_notes: data.resolutionNotes,
       })
+      setShowResolveDialog(false)
     }
+    
+    setIsResolving(false)
   }
 
   const handleW5H2Toggle = (checked: boolean) => {
@@ -155,6 +197,24 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
         updated_at: new Date().toISOString(),
       })
       setIsEditing(false)
+    }
+  }
+
+  const handlePhotosUpdate = async (photos: Array<{
+    url: string
+    filename: string
+    file?: File
+    photo_type?: 'problem' | 'resolution'
+  }>) => {
+    const result = await updateProblemPhotos(problem.id, photos.map(photo => ({
+      url: photo.url,
+      filename: photo.filename,
+      photo_type: photo.photo_type || 'problem'
+    })))
+
+    if (!result?.error) {
+      // Recarregar a página para mostrar as fotos atualizadas
+      window.location.reload()
     }
   }
 
@@ -368,7 +428,40 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
               </div>
             </div>
 
-            <div className="flex gap-2">
+            {/* Edição de fotos */}
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <h5 className="font-semibold text-slate-900">Fotos do Problema</h5>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setEditingPhotos(!editingPhotos)}
+                >
+                  {editingPhotos ? "Cancelar Edição" : "Editar Fotos"}
+                </Button>
+              </div>
+              
+              {editingPhotos ? (
+                <PhotoEdit
+                  photos={(problem as any).problem_photos || []}
+                  onPhotosChange={handlePhotosUpdate}
+                  photoType="problem"
+                  maxPhotos={5}
+                  title="Fotos do Problema"
+                  description="Edite as fotos do problema"
+                />
+              ) : (
+                /* Exibição normal das fotos */
+                ((problem.photos && problem.photos.length > 0) ||
+                 ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
+                  <div>
+                    <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
+                  </div>
+                )
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-4 border-t">
               <Button onClick={handleEditSave} size="sm">
                 Salvar Alterações
               </Button>
@@ -588,6 +681,15 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
           )}
         </div>
       </CardContent>
+
+      {/* Diálogo para marcar como resolvido */}
+      <ResolveProblemDialog
+        open={showResolveDialog}
+        onOpenChange={setShowResolveDialog}
+        onResolve={handleResolve}
+        problemTitle={problem.title}
+        isLoading={isResolving}
+      />
     </Card>
   )
 }

@@ -478,6 +478,11 @@ export async function updateProblem(
     recommendations?: string
     latitude_gms?: string
     longitude_gms?: string
+    photos?: Array<{
+      url: string
+      filename: string
+      photo_type?: 'problem' | 'resolution'
+    }>
   },
 ) {
   const cookieStore = await cookies()
@@ -512,11 +517,174 @@ export async function updateProblem(
       return { error: error.message }
     }
 
+    // Atualizar fotos se fornecidas
+    if (updateData.photos) {
+      // Primeiro, remover fotos existentes do tipo especificado
+      const photoType = updateData.photos[0]?.photo_type || 'problem'
+      await supabase
+        .from("problem_photos")
+        .delete()
+        .eq("problem_id", problemId)
+        .eq("photo_type", photoType)
+
+      // Inserir novas fotos
+      if (updateData.photos.length > 0) {
+        const photoInserts = updateData.photos.map(photo => ({
+          problem_id: problemId,
+          photo_url: photo.url,
+          filename: photo.filename,
+          photo_type: photo.photo_type || 'problem'
+        }))
+
+        const { error: photoError } = await supabase
+          .from("problem_photos")
+          .insert(photoInserts)
+
+        if (photoError) {
+          console.error("Photo update error:", photoError)
+          // Não falhar a operação por erro de foto
+        }
+      }
+    }
+
     revalidatePath("/")
     return { success: "Problem updated successfully" }
   } catch (error) {
     console.error("Update problem error:", error)
     return { error: "Failed to update problem. Please try again." }
+  }
+}
+
+export async function resolveProblem(
+  problemId: string,
+  resolutionData: {
+    resolutionNotes: string
+    resolutionPhotos?: Array<{
+      url: string
+      filename: string
+    }>
+  }
+) {
+  const cookieStore = await cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "User not authenticated" }
+  }
+
+  try {
+    // Atualizar status do problema
+    const { error: updateError } = await supabase
+      .from("problems")
+      .update({
+        status: "resolvido",
+        resolved_at: new Date().toISOString(),
+        resolution_notes: resolutionData.resolutionNotes,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", problemId)
+      .eq("user_id", user.id)
+
+    if (updateError) {
+      console.error("Resolve problem error:", updateError)
+      return { error: updateError.message }
+    }
+
+    // Adicionar fotos de resolução se fornecidas
+    if (resolutionData.resolutionPhotos && resolutionData.resolutionPhotos.length > 0) {
+      const photoInserts = resolutionData.resolutionPhotos.map(photo => ({
+        problem_id: problemId,
+        photo_url: photo.url,
+        filename: photo.filename,
+        photo_type: 'resolution' as const
+      }))
+
+      const { error: photoError } = await supabase
+        .from("problem_photos")
+        .insert(photoInserts)
+
+      if (photoError) {
+        console.error("Resolution photo error:", photoError)
+        // Não falhar a operação por erro de foto
+      }
+    }
+
+    revalidatePath("/")
+    return { success: "Problem resolved successfully" }
+  } catch (error) {
+    console.error("Resolve problem error:", error)
+    return { error: "Failed to resolve problem. Please try again." }
+  }
+}
+
+export async function updateProblemPhotos(
+  problemId: string,
+  photos: Array<{
+    url: string
+    filename: string
+    photo_type: 'problem' | 'resolution'
+  }>
+) {
+  const cookieStore = await cookies()
+  const supabase = createServerActionClient({ cookies: () => cookieStore })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "User not authenticated" }
+  }
+
+  try {
+    // Verificar se o usuário possui o problema
+    const { data: problem } = await supabase
+      .from("problems")
+      .select("id")
+      .eq("id", problemId)
+      .eq("user_id", user.id)
+      .single()
+
+    if (!problem) {
+      return { error: "Problem not found or you don't have permission" }
+    }
+
+    // Remover fotos existentes do tipo especificado
+    const photoType = photos[0]?.photo_type
+    if (photoType) {
+      await supabase
+        .from("problem_photos")
+        .delete()
+        .eq("problem_id", problemId)
+        .eq("photo_type", photoType)
+    }
+
+    // Inserir novas fotos
+    if (photos.length > 0) {
+      const photoInserts = photos.map(photo => ({
+        problem_id: problemId,
+        photo_url: photo.url,
+        filename: photo.filename,
+        photo_type: photo.photo_type
+      }))
+
+      const { error: photoError } = await supabase
+        .from("problem_photos")
+        .insert(photoInserts)
+
+      if (photoError) {
+        console.error("Photo update error:", photoError)
+        return { error: photoError.message }
+      }
+    }
+
+    revalidatePath("/")
+    return { success: "Photos updated successfully" }
+  } catch (error) {
+    console.error("Update photos error:", error)
+    return { error: "Failed to update photos. Please try again." }
   }
 }
 
