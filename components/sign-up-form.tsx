@@ -4,7 +4,7 @@ import { useActionState } from "react"
 import { useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, AlertTriangle } from "lucide-react"
+import { Loader2, UserPlus } from "lucide-react"
 import Link from "next/link"
 import { signUp } from "@/lib/actions"
 import { useRouter } from "next/navigation"
@@ -17,7 +17,7 @@ function SubmitButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="w-full bg-orange-600 hover:bg-orange-700 text-white py-6 text-lg font-medium rounded-lg h-[60px]"
+      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-medium rounded-lg h-[60px]"
     >
       {pending ? (
         <>
@@ -49,7 +49,7 @@ export default function SignUpForm() {
     <div className="w-full max-w-md space-y-8">
       <div className="space-y-2 text-center">
         <div className="flex justify-center mb-4">
-          <AlertTriangle className="h-12 w-12 text-orange-500" />
+          <UserPlus className="h-12 w-12 text-blue-500" />
         </div>
         <h1 className="text-4xl font-semibold tracking-tight text-gray-900">Criar conta</h1>
         <p className="text-lg text-gray-600">Cadastre-se para começar</p>
@@ -98,7 +98,7 @@ export default function SignUpForm() {
 
         <div className="text-center text-gray-600">
           Já tem uma conta?{" "}
-          <Link href="/auth/login" className="text-orange-600 hover:underline font-medium">
+          <Link href="/auth/login" className="text-blue-600 hover:underline font-medium">
             Entrar
           </Link>
         </div>
