@@ -235,9 +235,9 @@ export function PhotoEdit({
         </span>
       </div>
 
-      {/* Upload area */}
+      {/* Upload area - Mobile optimized */}
       <div
-        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+        className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
         onClick={() => {
           const input = document.createElement('input')
           input.type = 'file'
@@ -270,21 +270,26 @@ export function PhotoEdit({
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            {getPhotoTypeIcon()}
-            <p className="text-sm text-gray-600 mt-2">Clique para adicionar fotos</p>
-            <p className="text-xs text-gray-500 mt-1">PNG, JPG, JPEG</p>
-            <p className={`text-xs font-medium mt-1 flex items-center gap-1 ${getPhotoTypeColor()}`}>
-              <Upload className="h-3 w-3" />
-              Compressão automática para fotos grandes
-            </p>
-            <p className="text-xs text-red-600 font-medium">⚠️ Máximo 10MB por foto</p>
+            <div className="mb-2">
+              {getPhotoTypeIcon()}
+            </div>
+            <p className="text-sm sm:text-base text-gray-600 font-medium">📸 Adicionar Fotos</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Toque para selecionar</p>
+            <div className="flex flex-col items-center gap-1 mt-2">
+              <p className={`text-xs font-medium flex items-center gap-1 ${getPhotoTypeColor()}`}>
+                <Upload className="h-3 w-3" />
+                Compressão automática
+              </p>
+              <p className="text-xs text-red-600 font-medium">⚠️ Máximo 10MB por foto</p>
+              <p className="text-xs text-gray-500">PNG, JPG, JPEG</p>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Photo preview grid */}
+      {/* Photo preview grid - Mobile optimized */}
       {existingPhotos.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {existingPhotos.map((photo, index) => (
             <div key={index} className="relative group">
               <Image
@@ -292,17 +297,17 @@ export function PhotoEdit({
                 alt={photo.filename}
                 width={200}
                 height={150}
-                className="w-full h-24 object-cover rounded-lg"
+                className="w-full h-20 sm:h-24 object-cover rounded-lg"
               />
               <Button
                 variant="destructive"
                 size="icon"
-                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 h-5 w-5 sm:h-6 sm:w-6 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={() => removePhoto(index)}
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-2 w-2 sm:h-3 sm:w-3" />
               </Button>
-              <div className={`absolute bottom-1 left-1 text-xs px-2 py-1 rounded text-white ${
+              <div className={`absolute bottom-1 left-1 text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-white ${
                 photoType === 'problem' ? 'bg-orange-600' : 'bg-green-600'
               }`}>
                 {photoType === 'problem' ? 'Antes' : 'Depois'}

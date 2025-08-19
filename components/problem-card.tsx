@@ -238,56 +238,78 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
         problem.status === "pendente" && "border-l-4 border-l-red-500 shadow-md",
       )}
     >
-      <CardHeader className="pb-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2 flex-1">
-            <div className="flex items-center gap-3">
-              <h3 className="text-lg font-bold text-slate-900">
+      <CardHeader className="pb-3 sm:pb-4">
+        <div className="flex flex-col gap-3 sm:gap-2">
+          {/* Linha 1: Número do problema e status */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">
                 PROBLEMA #{String((problem as any).problem_number || index + 1).padStart(3, "0")}
               </h3>
               {problem.status === "pendente" && (
                 <div className="flex items-center gap-1 text-red-600">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span className="text-sm font-medium">NÃO RESOLVIDO</span>
+                  <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm font-medium hidden xs:inline">NÃO RESOLVIDO</span>
+                  <span className="text-xs sm:text-sm font-medium xs:hidden">PENDENTE</span>
                 </div>
               )}
             </div>
 
-            {/* Título do Problema */}
-            <h4 className="text-xl font-semibold text-slate-800 leading-tight">
+            {/* Botões de ação - mobile friendly */}
+            <div className="flex gap-1 sm:gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsEditing(!isEditing)}
+                className="p-2 sm:px-3"
+              >
+                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline ml-1">Editar</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDelete}
+                className="text-red-600 hover:text-red-700 bg-transparent p-2 sm:px-3"
+              >
+                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline ml-1">Excluir</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Linha 2: Título do Problema */}
+          <div>
+            <h4 className="text-lg sm:text-xl font-semibold text-slate-800 leading-tight break-words">
               {problem.title}
             </h4>
+          </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Badge className={severityConfig[problem.severity].color}>{severityConfig[problem.severity].label}</Badge>
-              {renderTypes(problem.type)}
+          {/* Linha 3: Badges - stack no mobile */}
+          <div className="flex flex-wrap gap-2">
+            <Badge className={severityConfig[problem.severity].color}>
+              {severityConfig[problem.severity].label}
+            </Badge>
+            {renderTypes(problem.type)}
+          </div>
+
+          {/* Linha 4: Informações de data e local - stack no mobile */}
+          <div className="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-2 text-xs sm:text-sm text-slate-600">
+            <span className="flex items-center gap-1">
+              📅 {createdDate} às {createdTime}
+            </span>
+            <span className="hidden xs:inline">•</span>
+            <span className="flex items-center gap-1">
+              📍 {problem.location || "Local não especificado"}
+            </span>
+          </div>
+          
+          {/* Linha 5: Coordenadas (quando disponíveis) */}
+          {((problem as any).latitude_gms && (problem as any).longitude_gms) && (
+            <div className="text-xs sm:text-sm text-slate-600 break-all">
+              🗺️ Coordenadas: {problem.latitude_gms}, {problem.longitude_gms} (GMS)
             </div>
-
-            <p className="text-sm text-slate-600">
-              📅 {createdDate} às {createdTime} • 📍 {problem.location || "Local não especificado"}
-            </p>
-            
-            {/* Coordenadas Geográficas */}
-            {((problem as any).latitude_gms && (problem as any).longitude_gms) && (
-              <p className="text-sm text-slate-600">
-                🗺️ Coordenadas: {problem.latitude_gms}, {problem.longitude_gms} (GMS)
-              </p>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)}>
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDelete}
-              className="text-red-600 hover:text-red-700 bg-transparent"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+          )}
         </div>
       </CardHeader>
 
@@ -471,68 +493,74 @@ export function ProblemCard({ problem, plan, index, onUpdate, onDelete }: Proble
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Layout principal: Descrição + Recomendações à esquerda, Fotos à direita */}
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Coluna esquerda: Descrição + Recomendações */}
-              <div className="flex-1 min-w-0 space-y-4">
+          <div className="space-y-3 sm:space-y-4">
+            {/* Mobile First: Fotos primeiro no mobile, lado a lado no desktop */}
+            <div className="flex flex-col gap-4">
+              {/* Fotos - Prioridade mobile */}
+              {((problem.photos && problem.photos.length > 0) ||
+                ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
+                <div className="order-1 lg:order-2">
+                  <h4 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">📸 Fotos do Problema</h4>
+                  <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
+                </div>
+              )}
+
+              {/* Descrição e Recomendações - Mobile friendly */}
+              <div className="order-2 lg:order-1 space-y-3 sm:space-y-4">
                 {/* Descrição do Problema */}
                 <div>
-                  <h4 className="font-semibold text-slate-900 mb-2">Descrição do Problema</h4>
-                  <p className="text-slate-700 bg-slate-50 p-3 rounded-lg whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                  <h4 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">📝 Descrição do Problema</h4>
+                  <div className="text-slate-700 bg-slate-50 p-3 rounded-lg text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words">
                     {problem.description}
-                  </p>
+                  </div>
                 </div>
 
                 {/* Recomendações */}
                 {(problem as any).recommendations && (
-                  <div className="min-w-0">
-                    <h4 className="font-semibold text-slate-900 mb-2">💡 Recomendações</h4>
-                    <p className="text-slate-700 bg-blue-50 p-3 rounded-lg whitespace-pre-wrap break-words overflow-wrap-anywhere border-l-4 border-l-blue-500 max-w-full overflow-hidden">
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">💡 Recomendações</h4>
+                    <div className="text-slate-700 bg-blue-50 p-3 rounded-lg text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words border-l-4 border-l-blue-500">
                       {(problem as any).recommendations}
-                    </p>
+                    </div>
                   </div>
                 )}
               </div>
-
-              {/* Coluna direita: Fotos */}
-              {((problem.photos && problem.photos.length > 0) ||
-                ((problem as any).problem_photos && (problem as any).problem_photos.length > 0)) && (
-                <div className="lg:w-96 lg:flex-shrink-0">
-                  <h4 className="font-semibold text-slate-900 mb-2">Fotos do Problema</h4>
-                  <PhotoCarousel photos={problem.photos || (problem as any).problem_photos || []} />
-                  {/* Debug visual */}
-                  <div className="text-xs text-gray-500 mt-1">
-                    Debug: {problem.photos?.length || (problem as any).problem_photos?.length || 0} fotos encontradas
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
 
-        {/* Controles de Resolução e 5W2H */}
-        <div className="border-t pt-4 space-y-4">
-          <div className="flex items-center space-x-2">
+        {/* Controles de Resolução e 5W2H - Mobile Friendly */}
+        <div className="border-t pt-3 sm:pt-4 space-y-3 sm:space-y-4">
+          {/* Checkbox de resolução */}
+          <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-slate-50 transition-colors">
             <Checkbox
               id={`resolved-${problem.id}`}
               checked={problem.status === "resolvido"}
               onCheckedChange={handleResolvedChange}
+              className="flex-shrink-0"
             />
-            <Label htmlFor={`resolved-${problem.id}`} className="font-medium">
-              Marcar como resolvido
+            <Label htmlFor={`resolved-${problem.id}`} className="font-medium text-sm sm:text-base cursor-pointer flex-1">
+              {problem.status === "resolvido" ? "✅ Problema resolvido" : "Marcar como resolvido"}
             </Label>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox id={`w5h2-${problem.id}`} checked={showW5H2} onCheckedChange={handleW5H2Toggle} />
-            <Label htmlFor={`w5h2-${problem.id}`} className="font-medium">
-              Criar plano 5W2H para resolução
-            </Label>
+          {/* Checkbox do plano 5W2H */}
+          <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors">
+            <div className="flex items-center space-x-2 flex-1">
+              <Checkbox 
+                id={`w5h2-${problem.id}`} 
+                checked={showW5H2} 
+                onCheckedChange={handleW5H2Toggle}
+                className="flex-shrink-0" 
+              />
+              <Label htmlFor={`w5h2-${problem.id}`} className="font-medium text-sm sm:text-base cursor-pointer">
+                Criar plano 5W2H para resolução
+              </Label>
+            </div>
             {showW5H2 ? (
-              <ChevronUp className="w-4 h-4 text-slate-500" />
+              <ChevronUp className="w-4 h-4 text-slate-500 flex-shrink-0" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-slate-500" />
+              <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
             )}
           </div>
 
