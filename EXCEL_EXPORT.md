@@ -3,6 +3,7 @@
 ## 🆕 Funcionalidade Implementada
 
 ### ✨ **Exportação Completa para Excel**
+
 - **Arquivo Excel (.xlsx)** com todas as informações dos problemas
 - **Imagens inseridas** diretamente nas células
 - **Layout responsivo** com formatação profissional
@@ -28,18 +29,21 @@
 ## 🖼️ **Tratamento de Imagens**
 
 ### **Fotos "Antes" (Problema)**
+
 - ✅ **Primeira foto** do problema é inserida
 - ✅ **Redimensionada** automaticamente para 100x100px máximo
 - ✅ **Proporção mantida** para não distorcer
 - ✅ **Download automático** da URL para inserção
 
 ### **Fotos "Depois" (Resolução)**
+
 - ✅ **Primeira foto** de resolução é inserida
 - ✅ **Mesmo tratamento** de redimensionamento
 - ✅ **Diferenciação visual** entre antes/depois
 - ✅ **Células vazias** quando não há foto
 
 ### **Lógica de Seleção**
+
 ```typescript
 // Para fotos "Antes"
 const problemPhotos = photos.filter(p => 
@@ -57,11 +61,13 @@ const firstResolutionPhoto = resolutionPhotos[0] // Primeira foto
 ## 🎨 **Formatação do Excel**
 
 ### **Cabeçalho**
+
 - **Fundo azul** (#366092)
 - **Texto branco** e negrito
 - **Alinhamento centralizado**
 
 ### **Dados**
+
 - **Linhas zebradas** (cinza claro alternado)
 - **Bordas** em todas as células
 - **Altura das linhas**: 80px (para acomodar imagens)
@@ -69,6 +75,7 @@ const firstResolutionPhoto = resolutionPhotos[0] // Primeira foto
 - **Alinhamento**: Esquerda e topo
 
 ### **Colunas**
+
 - **Larguras otimizadas** para cada tipo de conteúdo
 - **Colunas de imagem**: 15 caracteres de largura
 - **Descrições**: 40 caracteres
@@ -77,16 +84,19 @@ const firstResolutionPhoto = resolutionPhotos[0] // Primeira foto
 ## 🚀 **Como Usar**
 
 ### **1. Acessar Exportação**
+
 - Clique no botão **"Excel"** 📊 na barra de ferramentas
 - Localizado ao lado dos botões JSON, Imprimir e PowerPoint
 
 ### **2. Processo de Exportação**
+
 1. **Clique** no botão Excel
 2. **Aguarde** o processamento (mostra "Exportando...")
 3. **Download automático** do arquivo .xlsx
 4. **Nome do arquivo**: `problemas-AAAA-MM-DD.xlsx`
 
 ### **3. Tempo de Processamento**
+
 - **Sem imagens**: ~1-2 segundos
 - **Com imagens**: 5-10 segundos (dependendo da quantidade)
 - **Progress visual**: Spinner durante processamento
@@ -94,11 +104,13 @@ const firstResolutionPhoto = resolutionPhotos[0] // Primeira foto
 ## 📱 **Responsividade Mobile**
 
 ### **Botão Adaptativo**
+
 - **Mobile**: Apenas ícone 📊
 - **Desktop**: Ícone + texto "Excel"
 - **Disabled**: Quando não há problemas ou processando
 
 ### **Tamanho do Arquivo**
+
 - **Problemas sem imagens**: ~10-50KB
 - **Problemas com imagens**: 500KB-5MB (dependendo das fotos)
 - **Compressão**: Imagens são redimensionadas automaticamente
@@ -106,11 +118,13 @@ const firstResolutionPhoto = resolutionPhotos[0] // Primeira foto
 ## 🔧 **Tecnologias Utilizadas**
 
 ### **ExcelJS**
+
 - **Biblioteca**: `exceljs` para geração de arquivos Excel
 - **Recursos**: Suporte completo a imagens, formatação, estilos
 - **Compatibilidade**: Excel 2010+, Google Sheets, LibreOffice
 
 ### **Processamento de Imagens**
+
 - **Download**: Fetch API para baixar imagens
 - **Redimensionamento**: Canvas API para calcular proporções
 - **Inserção**: ExcelJS para posicionar imagens nas células
@@ -118,12 +132,14 @@ const firstResolutionPhoto = resolutionPhotos[0] // Primeira foto
 ## ⚡ **Performance**
 
 ### **Otimizações**
+
 - **Download paralelo** de imagens
 - **Cache** de dimensões calculadas
 - **Compressão automática** de imagens grandes
 - **Fallback** para erros de download
 
 ### **Limitações**
+
 - **Máximo 100 problemas** recomendado por arquivo
 - **Imagens grandes** podem demorar para processar
 - **Conexão lenta** pode afetar download de imagens
@@ -131,12 +147,14 @@ const firstResolutionPhoto = resolutionPhotos[0] // Primeira foto
 ## 🛠️ **Tratamento de Erros**
 
 ### **Problemas Possíveis**
+
 - **Imagem não encontrada**: Célula fica vazia
 - **Erro de rede**: Tenta próxima imagem
 - **Formato inválido**: Skip da imagem
 - **Timeout**: Continua sem a imagem
 
 ### **Logs**
+
 ```typescript
 console.error('Erro ao baixar imagem:', error)
 console.error('Erro ao inserir imagem "antes":', error)
@@ -145,7 +163,7 @@ console.error('Erro na exportação:', error)
 
 ## 📊 **Exemplo de Saída**
 
-```
+```bash
 | Nº | Título | Descrição | Tipo | Severidade | Local | Status | Data | Antes | Depois | Recomendações | Coordenadas |
 |----|--------|-----------|------|------------|-------|--------|------|-------|--------|---------------|-------------|
 | 01 | Vazamento | Óleo no solo | Meio Ambiente | Alto | Setor A | Resolvido | 15/12/2024 | [IMG] | [IMG] | Limpeza urgente | 02°30'50"S |
@@ -162,4 +180,4 @@ console.error('Erro na exportação:', error)
 
 ---
 
-**Funcionalidade completa e pronta para uso! 🎉📊**
+*Funcionalidade completa e pronta para uso! 🎉📊**

@@ -56,11 +56,13 @@ npm run dev
 ## Logs para Verificar
 
 **No navegador (Console):**
+
 - "Iniciando upload de [nome_arquivo]"
 - "Resposta do upload: 200 OK"
 - "Upload concluído para [nome_arquivo]"
 
 **No servidor (Terminal):**
+
 - "Iniciando upload - Headers: [...]"
 - "Arquivo recebido: [nome], tamanho: [bytes], tipo: [tipo]"
 - "Fazendo upload para Vercel Blob: [filename]"

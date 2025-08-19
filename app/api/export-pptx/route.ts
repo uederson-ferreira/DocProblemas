@@ -104,8 +104,10 @@ export async function POST(request: NextRequest) {
     for (const problem of problems) {
       const slide = pptx.addSlide()
 
-      // Problem title
-      const problemTitle = problem.title || `PROBLEMA #${String(problem.problem_number).padStart(3, "0")}`
+      // Problem title with number
+      const problemNumber = `PROBLEMA #${String(problem.problem_number || 1).padStart(3, "0")}`
+      const problemTitle = problem.title ? `${problemNumber} - ${problem.title}` : problemNumber
+      
       slide.addText(problemTitle, {
         x: 0.5,
         y: 0.2,
@@ -216,9 +218,9 @@ export async function POST(request: NextRequest) {
 
       // Add photos in right column if available
       if (problem.problem_photos && problem.problem_photos.length > 0) {
-        // Conversão: 8,47cm x 12,14cm = 3.33" x 4.78" (1 polegada = 2.54 cm)
-        const photoWidth = 3.33  // 8,47 cm
-        const photoHeight = 4.78 // 12,14 cm
+        // Conversão: 12,14cm x 8,47cm = 4.78" x 3.33" (1 polegada = 2.54 cm)
+        const photoWidth = 4.78  // 12,14 cm (largura)
+        const photoHeight = 3.33 // 8,47 cm (altura)
 
         // Use the first photo as main image, occupying most of the right column
         const mainPhoto = problem.problem_photos[0]
@@ -226,10 +228,11 @@ export async function POST(request: NextRequest) {
         try {
           const base64Image = await convertImageToBase64(mainPhoto.photo_url)
           if (base64Image) {
+            // Posição específica: Esquerda 11,49cm = 4.52" e Superior 2,46cm = 0.97"
             slide.addImage({
               data: base64Image,
-              x: rightColumnX,
-              y: 1.0,
+              x: 4.52,  // 11,49 cm convertido para polegadas
+              y: 0.97,  // 2,46 cm convertido para polegadas  
               w: photoWidth,
               h: photoHeight,
               sizing: { type: "contain", w: photoWidth, h: photoHeight },
@@ -238,7 +241,7 @@ export async function POST(request: NextRequest) {
         } catch (error) {
           console.error("Error adding image to slide:", error)
           slide.addText(`[Foto: ${mainPhoto.filename}]`, {
-            x: rightColumnX,
+            x: 4.52,  // Mesma posição x da foto
             y: 2.5,
             w: photoWidth,
             h: 0.3,
@@ -252,12 +255,12 @@ export async function POST(request: NextRequest) {
         if (problem.problem_photos.length > 1) {
           const smallPhotoWidth = (photoWidth - 0.2) / 2
           const smallPhotoHeight = 1.5
-          const startY = 4.2
+          const startY = 4.5  // Ajustado para posição relativa à foto principal
 
           for (let i = 1; i < Math.min(problem.problem_photos.length, 3); i++) {
             const photo = problem.problem_photos[i]
             const col = (i - 1) % 2
-            const x = rightColumnX + col * (smallPhotoWidth + 0.1)
+            const x = 4.52 + col * (smallPhotoWidth + 0.1)  // Baseado na posição x da foto principal
 
             try {
               const base64Image = await convertImageToBase64(photo.photo_url)
