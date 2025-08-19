@@ -10,10 +10,11 @@ export async function POST(request: NextRequest) {
     
     const contentLength = request.headers.get("content-length")
     if (contentLength && Number.parseInt(contentLength) > 10 * 1024 * 1024) {
-      console.log(`Arquivo rejeitado - muito grande: ${contentLength} bytes`)
+      const fileSizeMB = (Number.parseInt(contentLength) / (1024 * 1024)).toFixed(1)
+      console.log(`Arquivo rejeitado - muito grande: ${contentLength} bytes (${fileSizeMB}MB)`)
       return NextResponse.json(
         {
-          error: "Arquivo muito grande. Máximo 10MB permitido.",
+          error: `Foto muito grande! O arquivo tem ${fileSizeMB}MB. O tamanho máximo permitido é 10MB. Tente comprimir a imagem antes de fazer o upload.`,
         },
         { status: 413 },
       )
@@ -30,8 +31,11 @@ export async function POST(request: NextRequest) {
     console.log(`Arquivo recebido: ${file.name}, tamanho: ${file.size} bytes, tipo: ${file.type}`)
 
     if (file.size > 10 * 1024 * 1024) {
-      console.log(`Arquivo rejeitado - muito grande: ${file.size} bytes`)
-      return NextResponse.json({ error: "Arquivo muito grande. Máximo 10MB permitido." }, { status: 413 })
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1)
+      console.log(`Arquivo rejeitado - muito grande: ${file.size} bytes (${fileSizeMB}MB)`)
+      return NextResponse.json({ 
+        error: `Foto muito grande! ${file.name} tem ${fileSizeMB}MB. O tamanho máximo permitido é 10MB. Tente comprimir a imagem antes de fazer o upload.` 
+      }, { status: 413 })
     }
 
     if (!file.type.startsWith("image/")) {

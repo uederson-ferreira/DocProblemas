@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Upload, X } from "lucide-react"
+import { Upload, X, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 import Image from "next/image"
+import { compressIfNeeded, formatFileSize, needsCompression } from "@/lib/image-compression"
 
 interface UploadedPhoto {
   url: string
@@ -20,6 +21,8 @@ interface PhotoUploadProps {
 
 export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false)
+  const [compressing, setCompressing] = useState(false)
+  const [compressionStatus, setCompressionStatus] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (files: FileList) => {
@@ -36,9 +39,9 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUplo
     const newPhotos: UploadedPhoto[] = []
 
     for (let i = 0; i < files.length; i++) {
-      const file = files[i]
+      const originalFile = files[i]
 
-      if (!file.type.startsWith("image/")) {
+      if (!originalFile.type.startsWith("image/")) {
         toast({
           title: "Arquivo inválido",
           description: "Apenas imagens são permitidas",
@@ -47,10 +50,53 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUplo
         continue
       }
 
+      let file = originalFile
+
+      // Verificar se precisa comprimir
+      if (needsCompression(originalFile)) {
+        try {
+          setCompressing(true)
+          setCompressionStatus(`Comprimindo ${originalFile.name}...`)
+          
+          const compressionResult = await compressIfNeeded(originalFile, {
+            maxWidth: 1920,
+            maxHeight: 1080,
+            quality: 0.85,
+            maxSizeBytes: 8 * 1024 * 1024, // 8MB após compressão
+            outputFormat: 'jpeg'
+          })
+
+          file = compressionResult.file
+
+          if (compressionResult.compressionRatio > 0) {
+            toast({
+              title: "🔧 Foto comprimida automaticamente!",
+              description: `${originalFile.name}: ${formatFileSize(compressionResult.originalSize)} → ${formatFileSize(compressionResult.compressedSize)} (${compressionResult.compressionRatio}% menor)`,
+              variant: "default",
+            })
+          }
+
+          setCompressing(false)
+          setCompressionStatus("")
+        } catch (error) {
+          setCompressing(false)
+          setCompressionStatus("")
+          console.error("Erro na compressão:", error)
+          toast({
+            title: "Erro na compressão",
+            description: `Não foi possível comprimir ${originalFile.name}. Tentando upload original...`,
+            variant: "destructive",
+          })
+          file = originalFile // Usar arquivo original se a compressão falhar
+        }
+      }
+
+      // Verificar novamente após compressão
       if (file.size > 10 * 1024 * 1024) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1)
         toast({
-          title: "Arquivo muito grande",
-          description: `${file.name} excede o limite de 10MB`,
+          title: "📸 Foto ainda muito grande!",
+          description: `${file.name} tem ${fileSizeMB}MB mesmo após compressão. Tente usar uma imagem menor.`,
           variant: "destructive",
         })
         continue
@@ -150,10 +196,21 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUplo
           accept="image/*"
           className="hidden"
           onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-          disabled={uploading || photos.length >= maxPhotos}
+          disabled={uploading || compressing || photos.length >= maxPhotos}
         />
 
-        {uploading ? (
+        {compressing ? (
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mb-2"></div>
+            <p className="text-sm text-orange-600 font-medium flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Comprimindo fotos...
+            </p>
+            {compressionStatus && (
+              <p className="text-xs text-gray-500 mt-1">{compressionStatus}</p>
+            )}
+          </div>
+        ) : uploading ? (
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
             <p className="text-sm text-gray-600">Enviando fotos...</p>
@@ -162,7 +219,12 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUplo
           <div className="flex flex-col items-center">
             <Upload className="h-8 w-8 text-gray-400 mb-2" />
             <p className="text-sm text-gray-600">Clique para selecionar fotos ou arraste aqui</p>
-            <p className="text-xs text-gray-500 mt-1">PNG, JPG, JPEG até 10MB cada</p>
+            <p className="text-xs text-gray-500 mt-1">PNG, JPG, JPEG</p>
+            <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Compressão automática para fotos grandes
+            </p>
+            <p className="text-xs text-red-600 font-medium">⚠️ Máximo 10MB por foto</p>
           </div>
         )}
       </div>
