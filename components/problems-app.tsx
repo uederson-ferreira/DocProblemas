@@ -180,7 +180,7 @@ export function ProblemsApp({ initialProblems, user }: ProblemsAppProps) {
           ) : (
             filteredProblems.map((problem, index) => (
               <ProblemCard
-                key={problem.id}
+                key={`problem-${problem.id}-${index}`}
                 problem={problem}
                 plan={problem.w5h2_plans[0]}
                 index={index}

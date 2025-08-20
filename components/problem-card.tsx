@@ -49,7 +49,7 @@ const renderTypes = (types: string | string[]) => {
   
   return typeArray.map((type, index) => (
     <Badge 
-      key={index} 
+      key={`badge-${type}-${index}`} 
       className={typeConfig[type as keyof typeof typeConfig]?.color || "bg-gray-500 text-white"}
     >
       {typeConfig[type as keyof typeof typeConfig]?.label || type}
