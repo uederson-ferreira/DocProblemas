@@ -48,8 +48,8 @@ export default function LoginForm() {
         <div className="flex justify-center mb-4">
           <AlertTriangle className="h-12 w-12 text-orange-500" />
         </div>
-        <h1 className="text-4xl font-semibold tracking-tight text-gray-900">Bem-vindo</h1>
-        <p className="text-lg text-gray-600">Entre na sua conta</p>
+        <h1 className="text-4xl font-semibold tracking-tight text-gray-900">DocProblemas</h1>
+        <p className="text-lg text-gray-600">Sistema de Documentação de Problemas</p>
       </div>
 
       <form action={formAction} className="space-y-6">
@@ -94,6 +94,21 @@ export default function LoginForm() {
           </Link>
         </div>
       </form>
+      
+      {/* Footer com informações do desenvolvedor */}
+      <div className="text-center text-sm text-gray-500 mt-8 pt-6 border-t border-gray-200">
+        <p>
+          Desenvolvido por{" "}
+          <a 
+            href="https://github.com/uederson-ferreira" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-orange-600 hover:text-orange-700 font-medium hover:underline"
+          >
+            Uederson Ferreira
+          </a>
+        </p>
+      </div>
     </div>
   )
 }
